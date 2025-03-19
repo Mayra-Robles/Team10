@@ -1,17 +1,19 @@
 from Project import Project
 import datetime
+import json
 
 class ProjectManager:
     def __init__(self):
         self.projects = []  # List of active projects
         self.deleted_projects = []  # List of deleted projects
 
-    # Creates a new projecy and adds it to the list of projects
+    # Creates a new projecy and adds it to the list of projects    
     def create_project(self, project_name, start_date, time, lead_analyst_initials, 
                       description="", file_paths=None):
         new_project = Project(project_name, start_date, time, lead_analyst_initials, 
                              description, file_paths)
         self.projects.append(new_project)
+        self.save_to_file()  # Auto-save after creation
         return new_project
     
     # Imports and existing project from a data dictionary
@@ -113,3 +115,24 @@ class ProjectManager:
     def get_shared_projects(self, lead_analyst_initials):
         return [project.get_info() for project in self.projects 
                 if project.lead_analyst_initials != lead_analyst_initials]
+    
+    # Save all porject to a JSON file
+    def save_to_file(self, filename="projects.json"):
+        data = {
+            "projects": [project.get_info() for project in self.projects],
+            "deleted_projects": [project.get_info() for project in self.deleted_projects]
+        }
+        with open(filename, "w") as f:
+            json.dump(data, f, indent=4)
+        print(f"Saved to {filename}")
+
+    # Load projects from the JSON file we used to persist them
+    def load_from_file(self, filename="projects.json"):
+        try:
+            with open(filename, "r") as f:
+                data = json.load(f)
+                self.projects = [Project(**p) for p in data.get("projects", [])]
+                self.deleted_projects = [Project(**p) for p in data.get("deleted_projects", [])]
+            print(f"Loaded from {filename}")
+        except FileNotFoundError:
+            print(f"No file {filename} found, starting fresh.")

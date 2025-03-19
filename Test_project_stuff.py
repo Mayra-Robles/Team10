@@ -1,36 +1,35 @@
+# Test_project_stuff.py
 from ProjectManager import ProjectManager
 
 def main():
-    # Initialize the ProjectManager
     pm = ProjectManager()
+    print("Loading existing projects...")
+    pm.load_from_file()
 
-    # Create a new project
-    pm.create_project("TestProject", "2025-03-19", "14:30", "JD", "A test project", ["file1.txt"])
+    print("\nRetrieving all projects:")
+    print(pm.get_all_projects())
 
-    # Lock the project
-    pm.lock_project("TestProject")
+    print("\nCreating a new project (Save):")
+    pm.create_project("DemoProject", "2025-03-20", "09:00", "MR", "Demo for class")
+    print("All projects after save:", pm.get_all_projects())
 
-    # Try to delete (will fail because it’s locked)
-    print("Delete locked project:", pm.delete_project("TestProject"))  # False
+    print("\nRetrieving my projects (MR):")
+    print(pm.get_my_projects("MR"))
 
-    # Unlock and delete (fixing the previous typo: should be unlock)
-    project = pm.get_project("TestProject")
+    print("\nLocking and trying to delete:")
+    pm.lock_project("DemoProject")
+    print("Delete locked project:", pm.delete_project("DemoProject"))
+
+    print("\nUnlocking and deleting:")
+    project = pm.get_project("DemoProject")
     if project:
-        project.unlock()  # Corrected from lock_project to unlock
-        print("Delete unlocked project:", pm.delete_project("TestProject"))  # True
+        project.unlock()
+        pm.delete_project("DemoProject")
+    print("Deleted projects:", pm.get_deleted_projects())
 
-    # Restore the project
-    print("Restore project:", pm.restore_project("TestProject"))
-
-    # Import Nmap results
-    print("Import Nmap:", pm.import_nmap_results("TestProject", "nmap_results.xml"))
-
-    # Export project
-    project_data = pm.export_project("TestProject")
-    print("Exported project:", project_data)
-
-    # Get all projects
-    print("All projects:", pm.get_all_projects())
+    print("\nRestoring project:")
+    pm.restore_project("DemoProject")
+    print("All projects after restore:", pm.get_all_projects())
 
 if __name__ == "__main__":
     main()
