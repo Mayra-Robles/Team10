@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 import os
 
 class Project:
@@ -12,7 +12,7 @@ class Project:
         self.file_paths = file_paths if file_paths else []  # List of file paths
         self.is_locked = is_locked  # Prevents deletion if True
         self.status = status  # "active" (green), "errors" (red), "inactive" (gray)
-        self.created_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.created_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.last_edit_date = self.created_date
         self.folder_path = f"projects/{project_name}"  # Simulated folder path
 
@@ -48,4 +48,4 @@ class Project:
     def update_status(self, new_status):
         if new_status in ["active", "errors", "inactive"]:
             self.status = new_status
-            self.last_edit_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.last_edit_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

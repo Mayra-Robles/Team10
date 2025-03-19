@@ -37,7 +37,7 @@ class ProjectManager:
             if project.project_name == project_name and not project.is_locked:
                 deleted_project = self.projects.pop(i)
                 deleted_project.status = "inactive"
-                deleted_project.last_edit_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                deleted_project.last_edit_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 self.deleted_projects.append(deleted_project)
                 return True
         return False
@@ -48,7 +48,7 @@ class ProjectManager:
             if project.project_name == project_name:
                 restored_project = self.deleted_projects.pop(i)
                 restored_project.status = "active"
-                restored_project.last_edit_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                restored_project.last_edit_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 self.projects.append(restored_project)
                 return True
         return False
@@ -75,7 +75,7 @@ class ProjectManager:
         project = self.get_project(project_name)
         if project:
             project.file_paths.append(nmap_file_path)
-            project.last_edit_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            project.last_edit_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             return True
         return False
     
