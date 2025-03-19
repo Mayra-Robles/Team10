@@ -1,30 +1,34 @@
 <script>
-	export let name;
+    import { onMount } from 'svelte';
+    import axios from 'axios';
+
+    let projects = [];
+    let newProject = { name: '', date: '', time: '' };
+
+    onMount(async () => {
+        const response = await axios.get('http://localhost:5000/my_projects/MR');
+        projects = response.data;
+    });
+
+    async function createProject() {
+        await axios.post('http://localhost:5000/create', newProject);
+        const response = await axios.get('http://localhost:5000/my_projects/MR');
+        projects = response.data;
+        newProject = { name: '', date: '', time: '' };
+    }
 </script>
 
-<main>
-	<h1>Hello {name}!</h1>
-	<p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps.</p>
-</main>
-
-<style>
-	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
-	}
-
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
-	}
-
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	}
-</style>
+<h1>Project Management</h1>
+<div>
+    <h2>My Projects</h2>
+    <ul>
+        {#each projects as project}
+            <li>{project.project_name} - {project.status}</li>
+        {/each}
+    </ul>
+    <h3>Create Project</h3>
+    <input bind:value={newProject.name} placeholder="Name" />
+    <input bind:value={newProject.date} placeholder="YYYY-MM-DD" />
+    <input bind:value={newProject.time} placeholder="HH:MM" />
+    <button on:click={createProject}>Create</button>
+</div>

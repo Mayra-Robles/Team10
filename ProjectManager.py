@@ -131,8 +131,24 @@ class ProjectManager:
         try:
             with open(filename, "r") as f:
                 data = json.load(f)
-                self.projects = [Project(**p) for p in data.get("projects", [])]
-                self.deleted_projects = [Project(**p) for p in data.get("deleted_projects", [])]
+                self.projects = []
+                self.deleted_projects = []
+                # Filter out fields not in Project.__init__
+                init_args = set(Project.__init__.__code__.co_varnames) - {'self'}
+                for p in data.get("projects", []):
+                    # Only pass valid constructor args
+                    project_args = {k: v for k, v in p.items() if k in init_args}
+                    project = Project(**project_args)
+                    # Set extra fields manually
+                    project.created_date = p.get("created_date", project.created_date)
+                    project.last_edit_date = p.get("last_edit_date", project.last_edit_date)
+                    self.projects.append(project)
+                for p in data.get("deleted_projects", []):
+                    project_args = {k: v for k, v in p.items() if k in init_args}
+                    project = Project(**project_args)
+                    project.created_date = p.get("created_date", project.created_date)
+                    project.last_edit_date = p.get("last_edit_date", project.last_edit_date)
+                    self.deleted_projects.append(project)
             print(f"Loaded from {filename}")
         except FileNotFoundError:
             print(f"No file {filename} found, starting fresh.")
