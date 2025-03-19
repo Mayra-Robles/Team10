@@ -1,3 +1,6 @@
+from Project import Project
+import datetime
+
 class ProjectManager:
     def __init__(self):
         self.projects = []  # List of active projects
