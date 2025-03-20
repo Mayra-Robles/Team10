@@ -6,16 +6,24 @@
     let newProject = { name: '', date: '', time: '' };
 
     onMount(async () => {
+    try {
         const response = await axios.get('http://localhost:5000/my_projects/MR');
-        projects = response.data;
-    });
+        projects = [...response.data]; // Ensures Svelte detects changes
+    } catch (error) {
+        console.error("Error fetching projects:", error);
+    }
+});
 
-    async function createProject() {
+async function createProject() {
+    try {
         await axios.post('http://localhost:5000/create', newProject);
         const response = await axios.get('http://localhost:5000/my_projects/MR');
-        projects = response.data;
+        projects = [...response.data]; // Forces reactivity update
         newProject = { name: '', date: '', time: '' };
+    } catch (error) {
+        console.error("Error creating project:", error);
     }
+}
 </script>
 
 <h1>Project Management</h1>
