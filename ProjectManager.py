@@ -83,11 +83,17 @@ class ProjectManager:
     
     # Exports a project as a dictionary (simulating file export)
     # TODO: How do we actually do this to JSON or somethihng like that?
-    def export_project(self, project_name):
+    def export_project(self, project_name, filename=None):
         project = self.get_project(project_name)
         if project:
-            return project.get_info()
+            data = project.get_info()
+            if filename:
+                with open(filename, "w") as f:
+                    json.dump(data, f, indent=4)
+                print(f"Exported {project_name} to {filename}")
+            return data
         return None
+
     
     # Helper method to retrieve a project by name
     def get_project(self, project_name):
