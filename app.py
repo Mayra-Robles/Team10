@@ -21,5 +21,12 @@ def create_project():
     pm.create_project(data["name"], data["date"], data["time"], "MR", data.get("description", ""))
     return jsonify({"status": "success"})
 
+@app.route("/delete/<project_name>", methods=["DELETE"])
+def delete_project(project_name):
+    success = pm.delete_project(project_name)  #use existing delete logic
+    if success:
+        return jsonify({"status": "success"})
+    return jsonify({"status": "error", "message": "Project not found or locked"}), 400
+
 if __name__ == "__main__":
     app.run(debug=True)

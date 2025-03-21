@@ -14,6 +14,7 @@
     }
 });
 
+//create new project funtion ↓
 async function createProject() {
     try {
         await axios.post('http://localhost:5000/create', newProject);
@@ -24,6 +25,19 @@ async function createProject() {
         console.error("Error creating project:", error);
     }
 }
+
+//delete existing project function ↓
+async function deleteProject(projectName) {
+    try {
+        await axios.delete(`http://localhost:5000/delete/${projectName}`);
+        // Refresh the project list
+        const response = await axios.get('http://localhost:5000/my_projects/MR');
+        projects = [...response.data];
+    } catch (error) {
+        console.error("Error deleting project:", error);
+    }
+}
+
 </script>
 
 <h1>Project Management</h1>
@@ -31,7 +45,9 @@ async function createProject() {
     <h2>My Projects</h2>
     <ul>
         {#each projects as project}
-            <li>{project.project_name} - {project.status}</li>
+            <li>{project.project_name} - {project.status}
+                <button on:click={() => deleteProject(project.project_name)}> Delete</button>
+            </li>
         {/each}
     </ul>
     <h3>Create Project</h3>
