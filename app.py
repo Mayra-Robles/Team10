@@ -1,32 +1,39 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask import Flask, render_template, request, redirect, url_for
 from ProjectManager import ProjectManager
 
 app = Flask(__name__)
-CORS(app) #enable CORS
-pm = ProjectManager()
-pm.load_from_file()
 
-@app.route("/projects", methods=["GET"])
-def get_projects():
-    return jsonify(pm.get_all_projects())
+# Initialize ProjectManager with Neo4j connection
+pm = ProjectManager(uri="neo4j://941e739f.databases.neo4j.io", user="neo4j", password="Team_Blue")
 
-@app.route("/my_projects/<initials>", methods=["GET"])
-def get_my_projects(initials):
-    return jsonify(pm.get_my_projects(initials))
+@app.route('/')
+def dashboard():
+    # For now, we'll assume the user is "MR" (you can add login later)
+    lead_analyst_initials = "MR"
 
-@app.route("/create", methods=["POST"])
+    # Fetch projects
+    my_projects = pm.get_my_projects(lead_analyst_initials)
+    shared_projects = pm.get_shared_projects(lead_analyst_initials)
+
+    return render_template('dashboard.html', my_projects=my_projects, shared_projects=shared_projects)
+
+@app.route('/create', methods=['GET', 'POST'])
 def create_project():
-    data = request.json
-    pm.create_project(data["name"], data["date"], data["time"], "MR", data.get("description", ""))
-    return jsonify({"status": "success"})
+    if request.method == 'POST':
+        project_name = request.form['project_name']
+        start_date = request.form['start_date']
+        time = request.form['time']
+        lead_analyst_initials = request.form['lead_analyst_initials']
+        description = request.form['description']
+        
+        pm.create_project(project_name, start_date, time, lead_analyst_initials, description)
+        return redirect(url_for('dashboard'))
+    
+    return render_template('create_project.html')
 
-@app.route("/delete/<project_name>", methods=["DELETE"])
-def delete_project(project_name):
-    success = pm.delete_project(project_name)  #use existing delete logic
-    if success:
-        return jsonify({"status": "success"})
-    return jsonify({"status": "error", "message": "Project not found or locked"}), 400
+@app.teardown_appcontext
+def close_db(error):
+    pm.close()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
