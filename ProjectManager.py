@@ -1,22 +1,43 @@
 from Project import Project
+from neo4j import GraphDatabase
 import datetime
-import json
+import ssl
 
 class ProjectManager:
-    def __init__(self):
-        self.projects = []  # List of active projects
-        self.deleted_projects = []  # List of deleted projects
+    def __init__(self, uri="neo4j://941e739f.databases.neo4j.io", user="neo4j", password="Team_Blue"):
+        context = ssl._create_unverified_context()
+        self.driver = GraphDatabase.driver(uri, auth=(user, password), encrypted=True, ssl_context=context)
 
-    # Creates a new projecy and adds it to the list of projects    
+    def close(self):
+        self.driver.close()
+
+    def _run_query(self, query, **params):
+        with self.driver.session() as session:
+            result = session.run(query, **params)
+            return list(result)  # Consume the result into a list within the session
+
     def create_project(self, project_name, start_date, time, lead_analyst_initials, 
                       description="", file_paths=None):
-        new_project = Project(project_name, start_date, time, lead_analyst_initials, 
-                             description, file_paths)
-        self.projects.append(new_project)
-        self.save_to_file()  # Auto-save after creation
-        return new_project
-    
-    # Imports and existing project from a data dictionary
+        project = Project(project_name, start_date, time, lead_analyst_initials, 
+                         description, file_paths)
+        query = """
+        MERGE (p:Project {project_name: $project_name})
+        SET p.start_date = $start_date,
+            p.time = $time,
+            p.description = $description,
+            p.file_paths = $file_paths,
+            p.is_locked = $is_locked,
+            p.status = $status,
+            p.created_date = $created_date,
+            p.last_edit_date = $last_edit_date,
+            p.folder_path = $folder_path
+        MERGE (a:Analyst {initials: $lead_analyst_initials})
+        MERGE (p)-[:LEAD_ANALYST]->(a)
+        RETURN p
+        """
+        self._run_query(query, **project.get_info())
+        return project
+
     def import_project(self, project_data):
         project = Project(
             project_data["project_name"],
@@ -24,137 +45,133 @@ class ProjectManager:
             project_data["time"],
             project_data["lead_analyst_initials"],
             project_data.get("description", ""),
-            project_data.get("file_paths", [])
+            project_data.get("file_paths", []),
+            project_data.get("is_locked", False),
+            project_data.get("status", "active"),
+            project_data.get("created_date"),
+            project_data.get("last_edit_date"),
+            project_data.get("folder_path")
         )
-        project.created_date = project_data.get("created_date", project.created_date)
-        project.last_edit_date = project_data.get("last_edit_date", project.last_edit_date)
-        project.is_locked = project_data.get("is_locked", False)
-        project.status = project_data.get("status", "active")
-        self.projects.append(project)
+        self.create_project(
+            project.project_name, project.start_date, project.time, 
+            project.lead_analyst_initials, project.description, project.file_paths
+        )
         return project
-    
-    # Deletes a project if it's not locked and moves it to the deletes_project list
+
     def delete_project(self, project_name):
-        for i, project in enumerate(self.projects):
-            if project.project_name == project_name and not project.is_locked:
-                deleted_project = self.projects.pop(i)
-                deleted_project.status = "inactive"
-                deleted_project.last_edit_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                self.deleted_projects.append(deleted_project)
-                return True
-        return False
-    
-    # Restore a deleted project from the list of deleted_projects
+        query = """
+        MATCH (p:Project {project_name: $project_name})
+        WHERE p.is_locked = false
+        SET p.status = 'inactive'
+        SET p.last_edit_date = $last_edit_date
+        SET p:DELETED
+        RETURN p
+        """
+        records = self._run_query(query, project_name=project_name, 
+                                 last_edit_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        return bool(records[0] if records else None)
+
     def restore_project(self, project_name):
-        for i, project in enumerate(self.deleted_projects):
-            if project.project_name == project_name:
-                restored_project = self.deleted_projects.pop(i)
-                restored_project.status = "active"
-                restored_project.last_edit_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                self.projects.append(restored_project)
-                return True
-        return False
-    
-    # Permanently deletes a project from the delete_projects list
+        query = """
+        MATCH (p:Project:DELETED {project_name: $project_name})
+        REMOVE p:DELETED
+        SET p.status = 'active'
+        SET p.last_edit_date = $last_edit_date
+        RETURN p
+        """
+        records = self._run_query(query, project_name=project_name, 
+                                 last_edit_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        return bool(records[0] if records else None)
+
     def delete_forever(self, project_name):
-        for i, project in enumerate(self.deleted_projects):
-            if project.project_name == project_name:
-                self.deleted_projects.pop(i)
-                # Simulate permanent deletion (e.g., remove folder)
-                return True
-        return False
-    
-    # Locks a project by name
+        query = """
+        MATCH (p:Project:DELETED {project_name: $project_name})
+        DETACH DELETE p
+        """
+        records = self._run_query(query, project_name=project_name)
+        return bool(records.consume().counters.nodes_deleted if records else False)
+
     def lock_project(self, project_name):
-        project = self.get_project(project_name)
-        if project:
-            project.lock()
-            return True
-        return False
-    
-    # Imports Nmap results into a project's file_paths
+        query = """
+        MATCH (p:Project {project_name: $project_name})
+        SET p.is_locked = true
+        RETURN p
+        """
+        records = self._run_query(query, project_name=project_name)
+        return bool(records[0] if records else None)
+
+    def unlock_project(self, project_name):
+        query = """
+        MATCH (p:Project {project_name: $project_name})
+        SET p.is_locked = false
+        RETURN p
+        """
+        records = self._run_query(query, project_name=project_name)
+        return bool(records[0] if records else None)
+
     def import_nmap_results(self, project_name, nmap_file_path):
-        project = self.get_project(project_name)
-        if project:
-            project.file_paths.append(nmap_file_path)
-            project.last_edit_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            return True
-        return False
-    
-    # Exports a project as a dictionary (simulating file export)
-    # TODO: How do we actually do this to JSON or somethihng like that?
+        query = """
+        MATCH (p:Project {project_name: $project_name})
+        SET p.file_paths = coalesce(p.file_paths, []) + $nmap_file_path
+        SET p.last_edit_date = $last_edit_date
+        RETURN p
+        """
+        records = self._run_query(query, project_name=project_name, nmap_file_path=nmap_file_path,
+                                 last_edit_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        return bool(records[0] if records else None)
+
     def export_project(self, project_name, filename=None):
-        project = self.get_project(project_name)
-        if project:
-            data = project.get_info()
-            if filename:
-                with open(filename, "w") as f:
-                    json.dump(data, f, indent=4)
-                print(f"Exported {project_name} to {filename}")
-            return data
-        return None
+        project_info = self.get_project(project_name)
+        if project_info and filename:
+            import json
+            with open(filename, "w") as f:
+                json.dump(project_info, f, indent=4)
+            print(f"Exported {project_name} to {filename}")
+        return project_info
 
-    
-    # Helper method to retrieve a project by name
     def get_project(self, project_name):
-        for project in self.projects:
-            if project.project_name == project_name:
-                return project
+        query = """
+        MATCH (p:Project {project_name: $project_name})-[:LEAD_ANALYST]->(a:Analyst)
+        RETURN p, a.initials AS lead_analyst_initials
+        """
+        records = self._run_query(query, project_name=project_name)
+        if records and records[0]:
+            p = records[0]["p"]
+            info = {key: p[key] for key in p.keys()}
+            info["lead_analyst_initials"] = records[0]["lead_analyst_initials"]
+            return info
         return None
-    
-    # Returns infor for all active projects
-    def get_all_projects(self):
-        return [project.get_info() for project in self.projects]
-    
-    # Returns info for all deleted projects
-    def get_deleted_projects(self):
-        return [project.get_info() for project in self.deleted_projects]
-    
-    # Returns projects where the user is the lead analyst
-    # This way they can see what projects they are the lead analyst for
-    def get_my_projects(self, lead_analyst_initials):
-        return [project.get_info() for project in self.projects 
-                if project.lead_analyst_initials == lead_analyst_initials]
-    
-    # Returns project where the use is not the lead analyst
-    # This is simulating the shared projects
-    def get_shared_projects(self, lead_analyst_initials):
-        return [project.get_info() for project in self.projects 
-                if project.lead_analyst_initials != lead_analyst_initials]
-    
-    # Save all porject to a JSON file
-    def save_to_file(self, filename="projects.json"):
-        data = {
-            "projects": [project.get_info() for project in self.projects],
-            "deleted_projects": [project.get_info() for project in self.deleted_projects]
-        }
-        with open(filename, "w") as f:
-            json.dump(data, f, indent=4)
-        print(f"Saved to {filename}")
 
-    # Load projects from the JSON file we used to persist them
-    def load_from_file(self, filename="projects.json"):
-        try:
-            with open(filename, "r") as f:
-                data = json.load(f)
-                self.projects = []
-                self.deleted_projects = []
-                # Filter out fields not in Project.__init__
-                init_args = set(Project.__init__.__code__.co_varnames) - {'self'}
-                for p in data.get("projects", []):
-                    # Only pass valid constructor args
-                    project_args = {k: v for k, v in p.items() if k in init_args}
-                    project = Project(**project_args)
-                    # Set extra fields manually
-                    project.created_date = p.get("created_date", project.created_date)
-                    project.last_edit_date = p.get("last_edit_date", project.last_edit_date)
-                    self.projects.append(project)
-                for p in data.get("deleted_projects", []):
-                    project_args = {k: v for k, v in p.items() if k in init_args}
-                    project = Project(**project_args)
-                    project.created_date = p.get("created_date", project.created_date)
-                    project.last_edit_date = p.get("last_edit_date", project.last_edit_date)
-                    self.deleted_projects.append(project)
-            print(f"Loaded from {filename}")
-        except FileNotFoundError:
-            print(f"No file {filename} found, starting fresh.")
+    def get_all_projects(self):
+        query = """
+        MATCH (p:Project) WHERE NOT p:DELETED
+        RETURN p
+        """
+        records = self._run_query(query)
+        return [{key: r["p"][key] for key in r["p"].keys()} for r in records]
+
+    def get_deleted_projects(self):
+        query = """
+        MATCH (p:Project:DELETED)
+        RETURN p
+        """
+        records = self._run_query(query)
+        return [{key: r["p"][key] for key in r["p"].keys()} for r in records]
+
+    def get_my_projects(self, lead_analyst_initials):
+        query = """
+        MATCH (p:Project)-[:LEAD_ANALYST]->(a:Analyst {initials: $initials})
+        WHERE NOT p:DELETED
+        RETURN p
+        """
+        records = self._run_query(query, initials=lead_analyst_initials)
+        return [{key: r["p"][key] for key in r["p"].keys()} for r in records]
+
+    def get_shared_projects(self, lead_analyst_initials):
+        query = """
+        MATCH (p:Project)-[:LEAD_ANALYST]->(a:Analyst)
+        WHERE a.initials <> $initials AND NOT p:DELETED
+        RETURN p
+        """
+        records = self._run_query(query, initials=lead_analyst_initials)
+        return [{key: r["p"][key] for key in r["p"].keys()} for r in records]
