@@ -24,6 +24,18 @@ def delete_project(project_name):
         return redirect(url_for('dashboard'))
     return "Could not delete project", 400
 
+@app.route("/lock/<project_name>", methods=["POST"])
+def lock_project(project_name):
+    if pm.lock_project(project_name):
+        return redirect(url_for('dashboard'))
+    return "Could not lock project", 400
+
+@app.route("/unlock/<project_name>", methods=["POST"])
+def unlock_project(project_name):
+    if pm.unlock_project(project_name):
+        return redirect(url_for('dashboard'))
+    return "Could not unlock project", 400
+
 @app.route('/')
 def dashboard():
     # For now, we'll assume the user is "MR" (you can add login later)

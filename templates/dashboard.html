@@ -92,10 +92,21 @@
                                     <td>{{ project.project_name }}</td>
                                     <td class="d-flex gap-2">
                                         <a href="#" class="btn btn-sm btn-primary">Join</a>
-                                        <form action="{{ url_for('delete_project', project_name=project.project_name) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this project?');">
-                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                        </form>
-                                    </td>                                    
+                                    
+                                        {% if project.is_locked %}
+                                            <form action="{{ url_for('unlock_project', project_name=project.project_name) }}" method="POST">
+                                                <button type="submit" class="btn btn-sm btn-warning">Unlock</button>
+                                            </form>
+                                            <button class="btn btn-sm btn-danger" disabled>Delete</button>
+                                        {% else %}
+                                            <form action="{{ url_for('lock_project', project_name=project.project_name) }}" method="POST">
+                                                <button type="submit" class="btn btn-sm btn-secondary">Lock</button>
+                                            </form>
+                                            <form action="{{ url_for('delete_project', project_name=project.project_name) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this project?');">
+                                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                            </form>
+                                        {% endif %}
+                                    </td>                                                                    
                                 </tr>
                                 {% endfor %}
                             </tbody>
