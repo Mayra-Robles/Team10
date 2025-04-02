@@ -90,9 +90,12 @@
                                     <td>{{ project.last_edit_date }}</td>
                                     <td>{{ project.lead_analyst_initials }}</td>
                                     <td>{{ project.project_name }}</td>
-                                    <td>
+                                    <td class="d-flex gap-2">
                                         <a href="#" class="btn btn-sm btn-primary">Join</a>
-                                    </td>
+                                        <form action="{{ url_for('delete_project', project_name=project.project_name) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this project?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        </form>
+                                    </td>                                    
                                 </tr>
                                 {% endfor %}
                             </tbody>

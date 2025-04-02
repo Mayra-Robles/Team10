@@ -1,10 +1,28 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from ProjectManager import ProjectManager
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app) #NEEDED FOR SVELTE
 
 # Initialize ProjectManager with Neo4j connection
 pm = ProjectManager(uri="neo4j://941e739f.databases.neo4j.io", user="neo4j", password="Team_Blue")
+
+#API ROUTES ↓
+@app.route("/projects", methods=["GET"])
+def get_projects():
+    return jsonify(pm.get_all_projects())
+
+@app.route("/my_projects/<initials>", methods=["GET"])
+def get_my_projects(initials):
+    return jsonify(pm.get_my_projects(initials))
+
+@app.route("/delete/<project_name>", methods=["POST"])
+def delete_project(project_name):
+    success = pm.delete_project(project_name)
+    if success:
+        return redirect(url_for('dashboard'))
+    return "Could not delete project", 400
 
 @app.route('/')
 def dashboard():
@@ -31,6 +49,7 @@ def create_project():
     
     return render_template('create_project.html')
 
+#cleanup
 @app.teardown_appcontext
 def close_db(error):
     pm.close()
