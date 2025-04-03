@@ -8,11 +8,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f8f9fa;
+            background-color:rgb(49, 49, 49);
         }
         .sidebar {
             height: 100vh;
-            background-color: #e9ecef;
+            background-color:rgb(60, 60, 60);
             padding-top: 20px;
         }
         .nav-link {
@@ -37,7 +37,7 @@
             <!-- Sidebar -->
             <nav class="col-md-2 d-none d-md-block sidebar">
                 <div class="position-sticky">
-                    <h4 class="text-center">Project Dashboard</h4>
+                    <h4 class="text-center" style="color:rgb(255, 255, 255);">Project Dashboard</h4>
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link" href="#">📁</a>
@@ -55,17 +55,17 @@
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto px-md-4">
                 <div class="d-flex justify-content-between align-items-center mt-4">
-                    <h1>Project Selection</h1>
+                    <h1 style="color:rgb(255, 255, 255);">Project Selection</h1>
                     <a href="{{ url_for('create_project') }}" class="btn create-btn text-white">+ Create New</a>
                 </div>
 
                 <!-- Tabs -->
                 <ul class="nav nav-tabs mt-4" id="projectTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="my-projects-tab" data-bs-toggle="tab" data-bs-target="#my-projects" type="button" role="tab" aria-controls="my-projects" aria-selected="true">My Projects</button>
+                        <button class="nav-link active" id="my-projects-tab" data-bs-toggle="tab" style="color:rgb(255, 255, 255);" data-bs-target="#my-projects" type="button" role="tab" aria-controls="my-projects" aria-selected="true">My Projects</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="shared-projects-tab" data-bs-toggle="tab" data-bs-target="#shared-projects" type="button" role="tab" aria-controls="shared-projects" aria-selected="false">Shared Projects</button>
+                        <button class="nav-link" id="shared-projects-tab" data-bs-toggle="tab" data-bs-target="#shared-projects" style="color:rgb(255, 255, 255);" type="button" role="tab" aria-controls="shared-projects" aria-selected="false">Shared Projects</button>
                     </li>
                 </ul>
 
