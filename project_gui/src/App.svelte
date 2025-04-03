@@ -6,38 +6,41 @@
     let newProject = { name: '', date: '', time: '' };
 
     onMount(async () => {
-    try {
-        const response = await axios.get('http://localhost:5000/my_projects/MR');
-        projects = [...response.data]; // Ensures Svelte detects changes
-    } catch (error) {
-        console.error("Error fetching projects:", error);
-    }
-});
+        try {
+            const response = await axios.get('http://localhost:5000/my_projects/MR');
+            projects = [...response.data];
+        } catch (error) {
+            console.error("Error fetching projects:", error);
+        }
+    });
 
-//create new project funtion ↓
-async function createProject() {
-    try {
-        await axios.post('http://localhost:5000/create', newProject);
-        const response = await axios.get('http://localhost:5000/my_projects/MR');
-        projects = [...response.data]; // Forces reactivity update
-        newProject = { name: '', date: '', time: '' };
-    } catch (error) {
-        console.error("Error creating project:", error);
-    }
-}
+    async function createProject() {
+        const data = new URLSearchParams();
+        data.append("project_name", newProject.name);
+        data.append("start_date", newProject.date);
+        data.append("time", newProject.time);
+        data.append("lead_analyst_initials", "MR");
+        data.append("description", "");
 
-//delete existing project function ↓
-async function deleteProject(projectName) {
-    try {
-        await axios.delete(`http://localhost:5000/delete/${projectName}`);
-        // Refresh the project list
-        const response = await axios.get('http://localhost:5000/my_projects/MR');
-        projects = [...response.data];
-    } catch (error) {
-        console.error("Error deleting project:", error);
+        try {
+            await axios.post('http://localhost:5000/create', data);
+            const response = await axios.get('http://localhost:5000/my_projects/MR');
+            projects = [...response.data];
+            newProject = { name: '', date: '', time: '' };
+        } catch (error) {
+            console.error("Error creating project:", error);
+        }
     }
-}
 
+    async function deleteProject(projectName) {
+        try {
+            await axios.post(`http://localhost:5000/delete/${projectName}`);
+            const response = await axios.get('http://localhost:5000/my_projects/MR');
+            projects = [...response.data];
+        } catch (error) {
+            console.error("Error deleting project:", error);
+        }
+    }
 </script>
 
 <h1>Project Management</h1>
@@ -46,10 +49,11 @@ async function deleteProject(projectName) {
     <ul>
         {#each projects as project}
             <li>{project.project_name} - {project.status}
-                <button on:click={() => deleteProject(project.project_name)}> Delete</button>
+                <button on:click={() => deleteProject(project.project_name)}>Delete</button>
             </li>
         {/each}
     </ul>
+
     <h3>Create Project</h3>
     <input bind:value={newProject.name} placeholder="Name" />
     <input bind:value={newProject.date} placeholder="YYYY-MM-DD" />
