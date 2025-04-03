@@ -1,13 +1,15 @@
 from neo4j import GraphDatabase
 from json_builder import json
 from datetime import datetime
+import ssl
 
-URI="neo4j+s://941e739f.databases.neo4j.io"
+URI="neo4j://941e739f.databases.neo4j.io"
 User="neo4j"
 Password="Team_Blue"
 class Neo4jInteractive:
     def __init__(self, uri, user, password):
-        self.driver = GraphDatabase.driver(uri, auth=(user, password))
+        context = ssl._create_unverified_context()
+        self.driver = GraphDatabase.driver(uri, auth=(user, password), encrypted=True, ssl_context=context)
     """
     def start(self):
         print("Connected To Neo4j database. Choose a number to begin or exit to close")

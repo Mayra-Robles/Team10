@@ -1,11 +1,10 @@
 from Project import Project
 import datetime
-import ssl
 from neo4jDB import Neo4jInteractive
 
 class ProjectManager:
-    def __init__(self, uri="neo4j+s://941e739f.databases.neo4j.io", user="neo4j", password="Team_Blue"):
-        context = ssl._create_unverified_context()
+    def __init__(self, uri="neo4j://941e739f.databases.neo4j.io", user="neo4j", password="Team_Blue"):
+    
         #self.driver = GraphDatabase.driver(uri, auth=(user, password), encrypted=True, ssl_context=context)
         self.neo4j = Neo4jInteractive(uri, user, password)
 
