@@ -6,7 +6,7 @@ app = Flask(__name__)
 CORS(app) #NEEDED FOR SVELTE
 
 # Initialize ProjectManager with Neo4j connection
-pm = ProjectManager(uri="neo4j://941e739f.databases.neo4j.io", user="neo4j", password="Team_Blue")
+pm = ProjectManager(uri="neo4j+s://941e739f.databases.neo4j.io", user="neo4j", password="Team_Blue")
 
 #API ROUTES ↓
 @app.route("/projects", methods=["GET"])
