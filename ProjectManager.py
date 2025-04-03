@@ -1,8 +1,7 @@
 from Project import Project
-from neo4j import GraphDatabase
 import datetime
 import ssl
-from neo4j_driver import Neo4jInteractive
+from neo4jDB import Neo4jInteractive
 
 class ProjectManager:
     def __init__(self, uri="neo4j+s://941e739f.databases.neo4j.io", user="neo4j", password="Team_Blue"):
@@ -121,7 +120,9 @@ class ProjectManager:
     #    return [{key: r["p"][key] for key in r["p"].keys()} for r in records]
 
     def get_my_projects(self, lead_analyst_initials):
+        print(self.neo4j.get_my_projects(lead_analyst_initials))
         return self.neo4j.get_my_projects(lead_analyst_initials)
 
     def get_shared_projects(self, lead_analyst_initials):
         return self.neo4j.get_shared_projects(lead_analyst_initials)
+
