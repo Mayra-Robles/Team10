@@ -9,122 +9,43 @@ Password="Team_Blue"
 class Neo4jInteractive:
     def __init__(self, uri, user, password):
         context = ssl._create_unverified_context()
+        # ENCRYPTED and SSL_CONTEXT don't move, they are neccessary for Macs (Mayra in this case at least)
         self.driver = GraphDatabase.driver(uri, auth=(user, password), encrypted=True, ssl_context=context)
-    """
-    def start(self):
-        print("Connected To Neo4j database. Choose a number to begin or exit to close")
-        while True:
-            print("1. Create Lead Analyst")
-            print("2. Show projects")
-            print("3. Create Project")
-            print("4. Delete Project")
-            print("5. Lock Project")
-            print("6. Unlock Project")
-            print("7. Add lead owner to a project")
-            print("8. Add placeholder files to a project")
-            query = input("neo4j> ")  # Wait for query
-            if query.lower() == "exit":
-                print("Closing...")
-                self.driver.close()
-                break
-            try:    
-                if query=='1':
-                    print("Type Name, Id, role and initials separated by a comma")
-                    query = input("neo4j> ")
-                    queryArr=query.split(",")
-                    results = self.create_Analyst(queryArr[0], queryArr[1], queryArr[2], queryArr[3], queryArr[4], queryArr[5])
-                    print(results)
-                    
-                    
-                elif query=='2':
-                    print("Type the initials of Lead Analyst for specifc projects or leave blanks to see al projects")
-                    query = input("neo4j> ")
-                    results= self.show_projects(query)
-                    for record in results:
-                        print(record)  # Print results
-                        
-                elif query=='3':
-                    print("Type Id of project, Name of project and locked status separated by commas in that order")
-                    query= input("neo4j>")
-                    queryArr= query.split(',')
-                    results= self.create_projects(queryArr[0], queryArr[1], queryArr[2], queryArr[3], queryArr[4], queryArr[5])
-                    print(results)
-                    
-                elif query == '4':
-                    print("Type Id of the project you would like to delete")
-                    query = input("neo4j>")
-                    results=self.delete_project(int(query))
-                    print(results)
-                    
-                elif query == '5':
-                    print("Type Id of the project you would like to lock")
-                    query = input("neo4j>")
-                    results=self.lock_projects(int(query))
-                    print(results)
-                    
-                elif query == '6':
-                    print("Type Id of the project you would like to unlock")
-                    query = input("neo4j>")
-                    results=self.unlock_projects(int(query))
-                    print(results)
-                    
-                elif query== '7':
-                    print("Type Owner name and Id of project")
-                    query= input("neo4j>")
-                    queryArr= query.split(',')
-                    result=self.add_ownership(queryArr[0], queryArr[1])
-                    print(result)
-                    
-                elif query=='8':
-                    print("Type project name and all files you want to add to the project separated by a comma")
-                    query=input("neo4j>")
-                    queryArr=query.split(',')
-                    result=self.add_placeholderfiles(queryArr[0], queryArr[1:len(queryArr)])
-                    print(result)
-                
-                elif query=='9':
-                    query=input("neo4j>")
-                    queryArr=query.split(',')
-                    result= self.join_project(queryArr[0], queryArr[1])
-                    print(result)
-                
-                elif query=='10':
-                    query=input("neo4j>")
-                    queryArr=query.split(',')
-                    result= self.get_my_projects(queryArr[0])
-                    print(result)
-                    
-            except Exception as e:
-                print(f"Error: {e}")
-                """
             
-    #Allows to create a Lead Analyst
-    #@params Name: Name of the Analyst, ID: Id of the Analyst
-    #@returns JSON with format of all analysts or status error JSON
-    def create_Analyst(self, Name, ID, role, initials):
-        #if we don't have all the parameters necessary to create an analyst we return a json with error status and erorr Message
-        if not all([Name, ID, role, initials]):
-            return [{"status": "error"}]
-        #initial query to create user
-        query="""CREATE (u: Analyst {id: $Id, name: $name, 
-                role: $role, initials: $initials})"""
+    # Allows to create a Lead Analyst
+    # @params Name: Name of the Analyst, ID: Id of the Analyst
+    # @returns JSON with format of all analysts or status error JSON
+    def create_Analyst(self, Name, role, initials):
+        # if we don't have all the parameters necessary to create an analyst we return a json with error status and erorr Message
+        if not all([Name, role, initials]):
+            return [{"status": "failure", "error":"One or more parameters missing"}]
+        # initial query to create user
+        query="CREATE (u: Analyst {name: $name, initials: $initials}) RETURN elementId(u)"
+        
+        query_find_role = """
+        MERGE (r:Role {role: $role})
+        RETURN r
+        """
         with self.driver.session() as session:
-            #run query with params in safe way using $
-            session.run(query, name=str(Name), Id=int(ID), role=str(role), initials=str(initials).upper())
-            #return as variables to format it into json
-            #session.run("MATCH (u: Analyst) RETURN u.id AS id, u.name AS name, u.role AS role, u.initials AS initials, u.creationDate AS creationDate, u.description AS description, u.MachineIP AS MachineIP")            
-            #build json with format, success control message added to ensure correct communication with front end
+            # run query with params in safe way using $
+            result=session.run(query, name=str(Name), initials=str(initials).upper())
+            session.run(query_find_role, role=str(role))
+
+            query_create_relation = "MATCH (u:Analyst {initials: $initials}), (r:Role {role: $role}) MERGE (u)-[:HAS_ROLE]->(r)"
+            session.run(query_create_relation, initials=str(initials).upper(), role=str(role))
             return [{"status": "success"}]
     
-   
+    # Allows to delete an alayst specifying it's initials
+    # @params: initials: Initials of the analyst we are going to delete
+    # @returns: JSON format with success or error messages
     def delete_Analyst(self, initials):
         query = """
-        MATCH (u:Analyst {initials: $initials})
+        MATCH (a:Analyst {initials: $initials})
         DETACH DELETE a
         RETURN COUNT(a) AS deleted_count
         """
-        with self.neo4j.driver.session() as session:
-            result = session.run(query, initials=initials)
+        with self.driver.session() as session:
+            result = session.run(query, initials=str(initials).upper())
             deleted_count = result.single()["deleted_count"]
         
             if deleted_count > 0:
@@ -133,7 +54,9 @@ class Neo4jInteractive:
                 return [{"status": "failure", "error": "No analyst found"}]
 
     
-    #Retreives all  the analysts in the database  
+    # Retreives all  the analysts in the database 
+    # @params: no parameters
+    # @returns: JSON format of all the Analysts 
     def print_Analyst(self):
         query = """
         MATCH (u:Analyst)
@@ -144,21 +67,26 @@ class Neo4jInteractive:
             return [dict(record["u"]) for record in result]
     
     #Allows to create project with name, id and locked status
-    #@params: Project_Name: Name of the project, ID: unique id assigned to project, 
-    #         Lockedstatus: boolean value for locked status
-    #@returns: JSON format of all projects
-    def create_projects(self, Project_Name, ID, lockedstatus, description, MachineIP, Lead_Initials):
-        locked_bool = lockedstatus.lower() == "true"
+    #@params: Project_Name: Name of the project, Lockedstatus: boolean value for locked status
+    #         description: Some text to describe the project, MachineIP: the ip associated to that project
+    #         status: current status of the project, list_files: list of all the files that the project have
+    #@returns: JSON format of with success or error messages
+    def create_projects(self, Project_Name, lockedstatus, description, MachineIP, status, list_files):
+        locked_bool = lockedstatus if isinstance(lockedstatus, bool) else lockedstatus.lower() == "true"
         if not is_ip_valid(MachineIP):
-            return [{"status": "error"}]
+            return [{"status": "failure", "error":"Invalid IP"}]
         todayDate=datetime.now()
         formatDate = todayDate.strftime("%Y-%m-%dT%H:%M:%S")
-        query= """CREATE (p: Project {id: $Id, name: $name, locked:$locked_status, 
-                Stamp_Date: datetime($Stamp_Date), description: $description, MachineIP: $MachineIP, files: [], Lead_Initials: $Lead_Initials})"""
+        query= """CREATE (p: Project {name: $name, locked:$locked_status, 
+                Stamp_Date: datetime($Stamp_Date), description: $description, MachineIP: $MachineIP, Status: $Status, files: $files})"""
         with self.driver.session() as session:
-            session.run(query, Id= int(ID), name=str(Project_Name), locked_status=locked_bool, Stamp_Date=formatDate, description=str(description), MachineIP=str(MachineIP), files=[], Lead_Initials=str(Lead_Initials).upper())
+            session.run(query, name=str(Project_Name), locked_status=locked_bool, Stamp_Date=formatDate, description=str(description), MachineIP=str(MachineIP), Status=str(status), files=[]if list_files=="" else list(list_files))
             return [{"status": "success"}]
         
+
+    #Allows to join to an existing project
+    #@params: project_name: Name of the project to join, analystInitials: Initials of the analyst that will join the project
+    #@returns: JSON format with success or error messages
     def join_project(self, project_name, analystInitials):
         query = """
         MATCH (a:Analyst {role: "Analyst", initials: $initials}), (p:Project {name: $name})
@@ -170,21 +98,27 @@ class Neo4jInteractive:
             analysts_joined = result.single()["analysts_joined"]
 
             if analysts_joined > 0:
-                return [{"status": "success", "analysts_joined": analysts_joined}]
+                return [{"status": "success"}]
             else:
-                return [{"status": "failure", "error": "No analysts with role 'analyst' or project not found"}]
+                return [{"status": "failure", "error": "No analysts or project not found"}]
         
-    #Allows to add a relationship of ownership betwwen the analyst and a project
-    #@params: Owner: Name of the analyst, ID: unique integer value of the project
-    #@returns: JSON format of all relationships
-    def add_ownership(self, Owner, ID):
-        query=""" MATCH (u:Analyst {name: $name}), (p: Project {id: $Id})
-            MERGE (u)-[:OWNS]->(p)"""
+    # Allows to add a relationship of ownership betwwen the analyst and a project
+    # @params: Owner_initials: Initials of the Lead analyst, project_name: Name of the project the analyst os going to own
+    # @returns: JSON format of all relationships
+    def add_ownership(self, Owner_initials, project_name):
+        query=""" MATCH (u:Analyst {initials: $initials})-[:HAS_ROLE]->(r:Role {role: "Lead"})
+                MATCH (p:Project {name: $project})
+                WHERE NOT (p)<-[:OWNS]-(:Analyst)
+                MERGE (u)-[o:OWNS]->(p)
+                RETURN o
+                """
         with self.driver.session() as session:
-            session.run(query, name=str(Owner), Id=int(ID))
+            session.run(query, initials=str(Owner_initials), project=str(project_name))
             result=session.run("MATCH p=()-[]->() RETURN p")
             graph_data=[]
             for record in result:
+                if record is None:
+                    return [{"status":"failure","error":"Proyect or Analyst does not exist or already has an owner"}]
                 path = record["p"]  # El camino 'p' es una lista de nodos y relaciones
                 path_json = []
                 #We search for nodes, neo4j has two different types, nodes or relationship (node such as User or project)
@@ -208,12 +142,12 @@ class Neo4jInteractive:
                 graph_data.append(path_json)
             response_json = json("success")
             response_json.set_data(graph_data)
-            return response_json.build()
+            return [{"status":"success",}]
         
         
-    #Allows to delete a specific project from the DB
-    #@params: Project_ID: unique id of project to delete
-    #@returns: JSON format of all projects updated
+    # Allows to delete a specific project from the DB
+    # @params: Project_ID: unique id of project to delete
+    # @returns: JSON format of all projects updated
     def delete_project(self, Project_ID):
         with self.driver.session() as session:
             Project_ID = int(Project_ID)
@@ -223,9 +157,9 @@ class Neo4jInteractive:
             return [{"status": "success"}]
         
             
-    #Allows to change locked property of a project to true
-    #@params: Project_ID: Unique id of project to lock
-    #@returns: JSON format of the locked project     
+    # Allows to change locked property of a project to true
+    # @params: Project_ID: Unique id of project to lock
+    # @returns: JSON format of the locked project     
     def lock_projects(self, Project_ID):
         with self.driver.session() as session:
             lock = "MATCH (p:Project {id: $id}) SET p.locked = true RETURN p.id AS id, p.name AS name, p.locked AS locked, p.files AS files"
@@ -233,11 +167,11 @@ class Neo4jInteractive:
             projects= [{"ID": record["id"], "Name": record["name"], "isLocked": record["locked"], "files": record["files"]}for record in result]
             json_builder=json("succsess")
             json_builder.set_data(projects)
-            return json_builder.build()
+            return [{"status":"success"}]
             
-    #Allows to change the locked property of a project to false
-    #@params: Project_ID: Unique id of project to lock
-    #@returns: Json format of unlocked project
+    # Allows to change the locked property of a project to false
+    # @params: Project_ID: Unique id of project to lock
+    # @returns: Json format of unlocked project
     def unlock_projects(self, Project_ID):
         with self.driver.session() as session:
             lock = "MATCH (p:Project {id: $id}) SET p.locked = false RETURN p.id AS id, p.name AS name, p.locked AS locked, p.files AS files"
@@ -245,11 +179,11 @@ class Neo4jInteractive:
             projects= [{"ID": record["id"], "Name": record["name"], "isLocked": record["locked"], "files": record["files"]}for record in result]
             json_builder=json("succsess")
             json_builder.set_data(projects)
-            return json_builder.build()
+            return [{"status":"success"}]
             
-    #Allows to add a list of files into the files property of a project node
-    #@params: project_name: name of the project we want to add files, files: list of files to add into the project
-    #@returns:JSON format of all projects
+    # Allows to add a list of files into the files property of a project node
+    # @params: project_name: name of the project we want to add files, files: list of files to add into the project
+    # @returns:JSON format of all projects
     def add_placeholderfiles(self, project_name, files):
         with self.driver.session() as session:
             query= """MATCH (p:Project {name: $project}) 
@@ -259,9 +193,9 @@ class Neo4jInteractive:
             projects= [{"ID": record["id"], "Name": record["name"], "isLocked": record["locked"], "files": record["files"]}for record in result]
             json_builder=json("succsess")
             json_builder.set_data(projects)
-            return json_builder.build()
+            return [{"status":"success"}]
 
- #added the following to match project manager file ↓
+    # added the following to match project manager file ↓
     def get_project_by_name(self, name):
         query = """
         MATCH (p:Project {name: $name})
@@ -285,6 +219,7 @@ class Neo4jInteractive:
                 info["lead_analyst_initials"] = record["lead_analyst_initials"]
                 return info
             return None
+    # get all projects to print
     def get_all_projects(self):
         query = """
         MATCH (p:Project)
@@ -293,7 +228,7 @@ class Neo4jInteractive:
         with self.driver.session() as session:
             result = session.run(query)
             return [dict(record["p"]) for record in result]
-
+    # get all projects the analyst owns
     def get_my_projects(self, analyst_initials):
         query = """
         MATCH (u:Analyst {initials: $initials})-[:OWNS]->(p:Project)
@@ -302,6 +237,12 @@ class Neo4jInteractive:
         with self.driver.session() as session:
             result = session.run(query, initials=str(analyst_initials).upper())
             return [dict(record["p"]) for record in result]
+    
+    def get_Analyst(self):
+        query="MATCH (a:Analyst) RETRUN a"
+        with self.driver.session() as session:
+            result= session.run(query)
+            return [dict(record["a"]) for record in result]
 
     def get_shared_projects(self, analyst_initials):
         query = """
@@ -330,7 +271,4 @@ def is_ip_valid(ip):
             return False
     
     return True
-"""        
-neo4j_console = Neo4jInteractive(URI, User, Password)
-startNeo= neo4j_console.start()
-"""
+
