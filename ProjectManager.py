@@ -17,23 +17,18 @@ class ProjectManager:
     #        result = session.run(query, **params)
     #        return list(result)  # Consume the result into a list within the session
 
-    def create_project(self, project_name, start_date, time, lead_analyst_initials,
-                    description="", file_paths=None):
-        project_id = hash(project_name) % (10**6)  # Simple ID hash
-        locked = "false"
+    def create_project(self, project_name, is_locked, description, machine_IP, status, lead_analyst_initials, files):
+        # Convert files to list if it's a string
+        if isinstance(files, str):
+            files = [] if files == "" else [files]  # Empty string becomes empty list, otherwise a single-item list
+            
+        # Create the Project node
+        self.neo4j.create_project(project_name, is_locked, description, machine_IP, status, files)
 
-        # Step 1: Create the Project node
-        self.neo4j.create_projects(project_name, str(project_id), locked)
+        # Create the OWNS relationship
+        self.neo4j.add_ownership(lead_analyst_initials, project_name)
 
-        # Step 2: Create the OWNS relationship
-        self.neo4j.add_ownership(lead_analyst_initials, str(project_id))
-
-        return {
-            "project_name": project_name,
-            "id": project_id,
-            "lead_analyst_initials": lead_analyst_initials
-        }
-
+        
     #no longer using the Project class anymore (at least not atm)
     #def import_project(self, project_data):
     #    project = Project(
@@ -125,3 +120,49 @@ class ProjectManager:
     def get_shared_projects(self, lead_analyst_initials):
         return self.neo4j.get_shared_projects(lead_analyst_initials)
 
+
+# ---------------- FOR TESTING PURPOSES ONLY ---------------- 
+def main():
+    pm = ProjectManager()
+    
+    try:
+        # Test project parameters
+        project_name = "TestProject1"
+        is_locked = False
+        description = "We are tesing the create project function"
+        machine_IP = "192.168.1.100"
+        status = "active"
+        lead_analyst_initials = "JD"
+        files = ["test_file1.txt", "test_file2.pdf"]
+        
+        # Create the project
+        print(f"Creating project: {project_name}")
+        pm.create_project(
+            project_name=project_name,
+            is_locked=is_locked,
+            description=description,
+            machine_IP=machine_IP,
+            status=status,
+            lead_analyst_initials=lead_analyst_initials,
+            files=files
+        )
+        
+        # Verify creation by getting the project
+        print("\nVerifying project creation...")
+        project_info = pm.get_project(project_name)
+        if project_info:
+            print("Project created successfully with following details:")
+            for key, value in project_info.items():
+                print(f"{key}: {value}")
+        else:
+            print("Failed to retrieve project information")
+            
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        
+    finally:
+        # Clean up
+        pm.close()
+
+if __name__ == "__main__":
+    main()

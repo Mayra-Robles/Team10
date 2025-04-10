@@ -71,7 +71,7 @@ class Neo4jInteractive:
     #         description: Some text to describe the project, MachineIP: the ip associated to that project
     #         status: current status of the project, list_files: list of all the files that the project have
     #@returns: JSON format of with success or error messages
-    def create_projects(self, Project_Name, lockedstatus, description, MachineIP, status, list_files):
+    def create_project(self, Project_Name, lockedstatus, description, MachineIP, status, list_files):
         locked_bool = lockedstatus if isinstance(lockedstatus, bool) else lockedstatus.lower() == "true"
         if not is_ip_valid(MachineIP):
             return [{"status": "failure", "error":"Invalid IP"}]
