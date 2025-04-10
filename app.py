@@ -42,7 +42,7 @@ def dashboard():
     lead_analyst_initials = "MR"
 
     # Fetch projects
-    my_projects = pm.get_my_projects(lead_analyst_initials)
+    my_projects = pm.get_all_projects()
     shared_projects = pm.get_shared_projects(lead_analyst_initials)
 
     return render_template('dashboard.html', my_projects=my_projects, shared_projects=shared_projects)

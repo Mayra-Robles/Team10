@@ -175,8 +175,8 @@ class Neo4jInteractive:
                     }
                      path_json.append(relationship_json)
                 graph_data.append(path_json)
-            response_json = json("success")
-            response_json.set_data(graph_data)
+            #response_json = json("success")
+            #response_json.set_data(graph_data)
             return {"status":"success",}
         
         
