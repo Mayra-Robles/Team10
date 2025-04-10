@@ -307,5 +307,3 @@ def is_ip_valid(ip):
     
     return True
 
-neo4=Neo4jInteractive(URI, User, Password)
-print(neo4.get_all_projects())
