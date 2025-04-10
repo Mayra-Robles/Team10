@@ -183,11 +183,11 @@ class Neo4jInteractive:
     # Allows to delete a specific project from the DB
     # @params: Project_ID: unique id of project to delete
     # @returns: JSON format of all projects updated
-    def delete_projec(self, Project_ID):
+    def delete_projec(self, project_name):
         with self.driver.session() as session:
             Project_ID = int(Project_ID)
-            query = "MATCH (p:Project {id: $id}) DETACH DELETE p"
-            session.run(query, id=Project_ID)
+            query = "MATCH (p:Project {name: $project_name}) DETACH DELETE p"
+            session.run(query, project_name=project_name)
             session.run("MATCH (p:Project) RETURN p p.id AS id, p.name AS name, p.locked AS locked, p.files AS files")
             return {"status": "success"}
         
@@ -306,3 +306,6 @@ def is_ip_valid(ip):
             return False
     
     return True
+
+neo4=Neo4jInteractive(URI, User, Password)
+print(neo4.get_all_projects())
