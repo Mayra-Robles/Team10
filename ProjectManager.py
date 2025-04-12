@@ -21,7 +21,7 @@ class ProjectManager:
         # Convert files to list if it's a string
         if isinstance(files, str):
             files = [] if files == "" else [files]  # Empty string becomes empty list, otherwise a single-item list
-            
+
         # Create the Project node
         self.neo4j.create_project(project_name, is_locked, description, machine_IP, status, files)
 
@@ -50,8 +50,8 @@ class ProjectManager:
     #    )
     #    return project
 
-    def delete_project(self, project_id):
-        result = self.neo4j.delete_project(project_id)
+    def delete_project(self, project_name):
+        result = self.neo4j.delete_project(project_name)
         return result.get("status") == "success" if isinstance(result, dict) else True
 
     #not needed (unlest we implement soft delete again)
