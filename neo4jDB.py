@@ -346,6 +346,3 @@ def is_ip_valid(ip):
     
     return True
 
-
-neo4=Neo4jInteractive(URI, User, Password)
-neo4.add_project_to_folder("Demoooooo3", "/folder")
