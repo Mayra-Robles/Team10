@@ -77,12 +77,12 @@ class Neo4jInteractive:
             session.run(query, name=str(Project_Name), locked_status=locked_bool, Stamp_Date=formatDate, description=str(description), MachineIP=str(MachineIP), Status=str(status), files=[]if list_files=="" else list(list_files), last_edit=formatDate)
             return {"status": "success"}
         
-    def relationship_results(self, project_name, id):
+    def relationship_results(self, project_name, id, type):
         if not all([project_name, id]):
             return {"status": "failure", "error":"One or more parameters missing"}
-        query= """MATCH (p:Project {name: $name}), (r:Result {id:$id}) MERGE (p)-[:HAS_RESULT]->(r)"""
+        query= """MATCH (p:Project {name: $name}), (r:Result {id:$id, type:$type}) MERGE (p)-[:HAS_RESULT]->(r)"""
         with self.driver.session() as session:
-            session.run(query, name=str(project_name), id=int(id))
+            session.run(query, name=str(project_name), id=int(id), type=str(type))
             return {"status": "success"}
 
 
@@ -95,10 +95,10 @@ class Neo4jInteractive:
             session.run(query, project_name=project_name)
             return {"status": "success"}
 
-    # Allows the Database to receive a JSON and put all the information inside a node called Results
+     # Allows the Database to receive a JSON and put all the information inside a node called Results
     # @params: json_data: json object, result_type: indicator for which type of result is
     # @returns: json with success or failure status 
-    def process_Response_1(self, json_data, result_type):
+    def process_Response(self, json_data, result_type):
         if isinstance(json_data, str):
             try:
                 results = json.loads(json_data)
@@ -110,24 +110,21 @@ class Neo4jInteractive:
             results = [json_data]
         else:
             return {"status": "failure", "error": "Unsupported type of JSON"}
-
         with self.driver.session() as session:
             for result in results:
-                # Agrega el tipo como propiedad adicional
                 result["type"] = result_type
 
-                # Construimos la query dinámicamente
                 fields = ", ".join([f"{key}: ${key}" for key in result])
                 query = f"CREATE (r:Result {{ {fields} }})"
 
                 try:
-                    session.execute_write(lambda tx: tx.run(query, **result))
+                    session.execute_write(lambda tx: tx.run(query, result))
                 except Exception as e:
                     return {
                         "status": "failure",
-                        "error": f"Failed to insert record: {str(e)}",
-
+                        "error": f"Failed to insert record: {str(e)}"
                     }
+
         return {"status": "success"}
 
 
