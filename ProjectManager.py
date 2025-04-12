@@ -75,8 +75,8 @@ class ProjectManager:
     #    records = self._run_query(query, project_name=project_name)
     #    return bool(records.consume().counters.nodes_deleted if records else False)
 
-    def lock_project(self, project_id):
-        result = self.neo4j.lock_projects(project_id)
+    def lock_project(self, project_name, analyst_initials):
+        result = self.neo4j.lock_projects(project_name, analyst_initials)
         return result.get("status") == "success" if isinstance(result, dict) else True
 
     def unlock_project(self, project_id):

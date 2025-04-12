@@ -9,7 +9,7 @@
 
     onMount(async () => {
         try {
-            const response = await fetch('http://localhost:8000/');
+            const response = await fetch('http://localhost:9000/');
             if (!response.ok) {
                 throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
             }
@@ -23,14 +23,15 @@
         }
     });
 
-    async function lockProject(projectName) {
+    async function lockProject(projectName, lead_analyst_initials) {
         try {
-            const response = await fetch(`http://localhost:8000/lock/${projectName}`, {
+            const response = await fetch(`http://localhost:9000/lock/${projectName}/${lead_analyst_initials}`, {
                 method: 'POST'
             });
             if (response.ok) {
                 myProjects = myProjects.map(project =>
                     project.name === projectName ? { ...project, locked: true } : project
+                
                 );
             } else {
                 throw new Error('Failed to lock project');
@@ -144,7 +145,7 @@
                                             {:else}
                                                 <button
                                                     class="btn btn-sm btn-secondary"
-                                                    on:click={() => lockProject(project.name)}
+                                                    on:click={() => lockProject(project.name, project.lead_analyst_initials)}
                                                 >
                                                     Lock
                                                 </button>

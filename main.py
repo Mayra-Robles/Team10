@@ -39,9 +39,10 @@ async def dashboard():
     return {"my_projects": my_projects, "shared_projects": shared_projects}
 
 
-@app.post("/lock/{project_name}")
-async def lock_project(project_name: str):
-    result = pm.lock_project(project_name)
+@app.post("/lock/{project_name}/{analyst_initials}")
+async def lock_project(project_name: str, analyst_initials: str):
+    analyst_initials = "MR"
+    result = pm.lock_project(project_name, analyst_initials)
     return {"status": "success", "project": project_name}
 
 @app.post("/unlock/{project_name}")
