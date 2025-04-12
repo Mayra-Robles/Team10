@@ -224,10 +224,10 @@ class Neo4jInteractive:
     # Allows to change the locked property of a project to false
     # @params: Project_ID: Unique id of project to lock
     # @returns: Json format of unlocked project
-    def unlock_projects(self, project_name):
+    def unlock_projects(self, project_name, analyst_initials):
         with self.driver.session() as session:
             lock = "MATCH (p:Project {name: $name})<-[:OWNS]-(a:Analyst {initials: $initials})-[:HAS_ROLE]->(r:Role) WHERE r.role = 'Lead' AND r.can_lock_unlock = true SET p.locked = false RETURN count(p) AS projectsLocked"
-            result=session.run(lock, name=project_name)
+            result=session.run(lock, name=project_name, initials=str(analyst_initials).upper())
             if result.single().get("projectLocked"):
                 return {"status":"success"}
             else:

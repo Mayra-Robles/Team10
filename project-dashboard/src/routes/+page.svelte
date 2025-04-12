@@ -41,9 +41,9 @@
         }
     }
 
-    async function unlockProject(projectName) {
+    async function unlockProject(projectName, lead_analyst_initials) {
         try {
-            const response = await fetch(`http://localhost:8000/unlock/${projectName}`, {
+            const response = await fetch(`http://localhost:9000/unlock/${projectName}/${lead_analyst_initials}`, {
                 method: 'POST'
             });
             if (response.ok) {

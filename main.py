@@ -45,7 +45,8 @@ async def lock_project(project_name: str, analyst_initials: str):
     result = pm.lock_project(project_name, analyst_initials)
     return {"status": "success", "project": project_name}
 
-@app.post("/unlock/{project_name}")
+@app.post("/unlock/{project_name}/{analyst_initials}")
 async def unlock_project(project_name: str):
-    result = pm.unlock_project(project_name)
+    analyst_intials="MR"
+    result = pm.unlock_project(project_name, analyst_intials)
     return {"status": "success", "project": project_name}

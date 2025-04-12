@@ -79,8 +79,8 @@ class ProjectManager:
         result = self.neo4j.lock_projects(project_name, analyst_initials)
         return result.get("status") == "success" if isinstance(result, dict) else True
 
-    def unlock_project(self, project_id):
-        result = self.neo4j.unlock_projects(project_id)
+    def unlock_project(self, project_name, analyst_initials):
+        result = self.neo4j.unlock_projects(project_name, analyst_initials)
         return result.get("status") == "success" if isinstance(result, dict) else True
     
     def import_nmap_results(self, project_name, nmap_file_path):
