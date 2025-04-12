@@ -140,7 +140,7 @@ class Neo4jInteractive:
     #@returns: JSON format with success or error messages
     def join_project(self, project_name, analystInitials):
         query = """
-        MATCH (a:Analyst {role: "Analyst", initials: $initials}), (p:Project {name: $name})
+        MATCH (a:Analyst {initials: $initials}), (p:Project {name: $name})
         MERGE (a)-[:inProject]->(p)
         RETURN COUNT(a) AS analysts_joined
         """
@@ -152,6 +152,24 @@ class Neo4jInteractive:
                 return {"status": "success"}
             else:
                 return {"status": "failure", "error": "No analysts or project not found"}
+    # Allows to create a folder(node) to store projects
+    # @params: path: string with the path or name for the folder
+    # @returns: JSON with success or failure status        
+    def create_folder(self, path):
+        if not path:
+            return {"status":"failure", "error": "No name received"}
+        query="""CREATE (:Folder {path:$path})"""
+        with self.driver.session() as session:
+            session.run(query, path=str(path))
+            return {"status": "success"}
+    
+    def add_project_to_folder(self, project_name, folder_path):
+        if not all([project_name, folder_path]):
+            return {"status": "failure", "error": "No project or folder received"}
+        query= """MATCH (u:Project {name: $name}), (f:Folder{path:$folder_path}) 
+                MERGE (u)-[:IS_IN]->(f)"""
+        with self.driver.session() as session:
+            session.run(query, name=str(project_name), folder_path=str(folder_path))
         
     # Allows to add a relationship of ownership betwwen the analyst and a project
     # @params: Owner_initials: Initials of the Lead analyst, project_name: Name of the project the analyst os going to own
@@ -327,3 +345,7 @@ def is_ip_valid(ip):
             return False
     
     return True
+
+
+neo4=Neo4jInteractive(URI, User, Password)
+neo4.add_project_to_folder("Demoooooo3", "/folder")
