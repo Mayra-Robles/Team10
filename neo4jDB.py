@@ -95,45 +95,43 @@ class Neo4jInteractive:
             session.run(query, project_name=project_name)
             return {"status": "success"}
 
-
     # Allows the Database to receive a JSON and put all the information inside a node called Results
     # @params: json_data: json object, result_type: indicator for which type of result is
     # @returns: json with success or failure status 
-    def process_Response(self, json_data, result_type):
-        #verify the multiple ways we can have our json
+    def process_Response_1(self, json_data, result_type):
         if isinstance(json_data, str):
             try:
-                results= json.loads(json_data)
+                results = json.loads(json_data)
             except json.JSONDecodeError:
-                return {"status":"failure","error":"Unsupported type of JSON"}
+                return {"status": "failure", "error": "Unsupported type of JSON"}
         elif isinstance(json_data, list):
-            results=json_data
+            results = json_data
         elif isinstance(json_data, dict):
-            results=[json_data]
+            results = [json_data]
         else:
-            return {"status":"failure", "error":"Unsupported type of JSON"}
-        # Ensures our response contains all the required values
-        required_fields = {"id", "response", "lines", "words", "chars", "payload", "length", "error"}
-        for i, result in enumerate(results):
-            if not required_fields.issubset(result.keys()):
-                return {"status": "failure", "error": "Incomplete JSON, missing fields"}
-        query = """
-            CREATE (r:Result {
-            id: $id,
-            response: $response,
-            lines: $lines,
-            words: $words,
-            chars: $chars,
-            payload: $payload,
-            length: $length,
-            error: $error,
-            type: $type
-            })
-            """
+            return {"status": "failure", "error": "Unsupported type of JSON"}
+
         with self.driver.session() as session:
             for result in results:
-                session.execute_write(lambda tx: tx.run(query, **result, type=result_type))
+                # Agrega el tipo como propiedad adicional
+                result["type"] = result_type
+
+                # Construimos la query dinámicamente
+                fields = ", ".join([f"{key}: ${key}" for key in result])
+                query = f"CREATE (r:Result {{ {fields} }})"
+
+                try:
+                    session.execute_write(lambda tx: tx.run(query, **result))
+                except Exception as e:
+                    return {
+                        "status": "failure",
+                        "error": f"Failed to insert record: {str(e)}",
+
+                    }
         return {"status": "success"}
+
+
+
             
     #Allows to join to an existing project
     #@params: project_name: Name of the project to join, analystInitials: Initials of the analyst that will join the project
@@ -217,26 +215,26 @@ class Neo4jInteractive:
     # Allows to change locked property of a project to true
     # @params: Project_ID: Unique id of project to lock
     # @returns: JSON format of the locked project     
-    def lock_projects(self, project_name):
+    def lock_projects(self, project_name, analyst_initials):
         with self.driver.session() as session:
-            lock = "MATCH (p:Project {name: $name}) SET p.locked = true"
-            result=session.run(lock, name = project_name)
-            projects= [{"ID": record["id"], "Name": record["name"], "isLocked": record["locked"], "files": record["files"]}for record in result]
-            json_builder=json("succsess")
-            json_builder.set_data(projects)
-            return {"status":"success"}
+            lock = "MATCH (p:Project {name: $name})<-[:OWNS]-(a:Analyst {initials: $initials})-[:HAS_ROLE]->(r:Role) WHERE r.role = 'Lead' AND r.can_lock_unlock = true SET p.locked = true RETURN count(p) AS projectsLocked"
+            result=session.run(lock, name = project_name, initials=str(analyst_initials).upper())
+            if result.single().get("projectLocked"):
+                return {"status":"success"}
+            else:
+                return {"status":"failure", "error": "You cannot lock this project, please contact a Lead"}
             
     # Allows to change the locked property of a project to false
     # @params: Project_ID: Unique id of project to lock
     # @returns: Json format of unlocked project
     def unlock_projects(self, project_name):
         with self.driver.session() as session:
-            lock = "MATCH (p:Project {name: $name}) SET p.locked = false"
+            lock = "MATCH (p:Project {name: $name})<-[:OWNS]-(a:Analyst {initials: $initials})-[:HAS_ROLE]->(r:Role) WHERE r.role = 'Lead' AND r.can_lock_unlock = true SET p.locked = false RETURN count(p) AS projectsLocked"
             result=session.run(lock, name=project_name)
-            projects= [{"ID": record["id"], "Name": record["name"], "isLocked": record["locked"], "files": record["files"]}for record in result]
-            json_builder=json("succsess")
-            json_builder.set_data(projects)
-            return {"status":"success"}
+            if result.single().get("projectLocked"):
+                return {"status":"success"}
+            else:
+                return {"status":"failure", "error": "You cannot lock this project, please contact a Lead"}
             
     # Allows to add a list of files into the files property of a project node
     # @params: project_name: name of the project we want to add files, files: list of files to add into the project
@@ -345,4 +343,3 @@ def is_ip_valid(ip):
             return False
     
     return True
-
