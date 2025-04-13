@@ -74,7 +74,7 @@ class Neo4jInteractive:
         query= """CREATE (p: Project {name: $name, locked:$locked_status, 
                 Stamp_Date: datetime($Stamp_Date), description: $description, MachineIP: $MachineIP, Status: $Status, files: $files, last_edit_date: datetime($last_edit)})"""
         with self.driver.session() as session:
-            session.run(query, name=str(Project_Name), locked_status=locked_bool, Stamp_Date=formatDate, description=str(description), MachineIP=str(MachineIP), Status=str(status), files=[]if list_files=="" else list(list_files), last_edit=formatDate)
+            session.run(query, name=str(Project_Name), locked_status=locked_bool, Stamp_Date=formatDate, description=str(description), MachineIP=str(MachineIP), Status=str(status).capitalize(), files=[]if list_files=="" else list(list_files), last_edit=formatDate)
             return {"status": "success"}
         
     def relationship_results(self, project_name, id, type):
@@ -214,7 +214,7 @@ class Neo4jInteractive:
     # @returns: JSON format of the locked project     
     def lock_projects(self, project_name, analyst_initials):
         with self.driver.session() as session:
-            lock = "MATCH (p:Project {name: $name})<-[:OWNS]-(a:Analyst {initials: $initials})-[:HAS_ROLE]->(r:Role) WHERE r.role = 'Lead' AND r.can_lock_unlock = true SET p.locked = true RETURN count(p) AS projectsLocked"
+            lock = "MATCH (p:Project {name: $name})<-[:OWNS]-(a:Analyst {initials: $initials})-[:HAS_ROLE]->(r:Role) WHERE r.role = 'Lead' AND r.can_lock_unlock = true SET p.locked = true SET p.Status= 'Inactive' RETURN count(p) AS projectsLocked"
             result=session.run(lock, name = project_name, initials=str(analyst_initials).upper())
             if result.single().get("projectLocked"):
                 return {"status":"success"}
@@ -226,7 +226,7 @@ class Neo4jInteractive:
     # @returns: Json format of unlocked project
     def unlock_projects(self, project_name, analyst_initials):
         with self.driver.session() as session:
-            lock = "MATCH (p:Project {name: $name})<-[:OWNS]-(a:Analyst {initials: $initials})-[:HAS_ROLE]->(r:Role) WHERE r.role = 'Lead' AND r.can_lock_unlock = true SET p.locked = false RETURN count(p) AS projectsLocked"
+            lock = "MATCH (p:Project {name: $name})<-[:OWNS]-(a:Analyst {initials: $initials})-[:HAS_ROLE]->(r:Role) WHERE r.role = 'Lead' AND r.can_lock_unlock = true SET p.locked = false SET p.Status= 'Active' RETURN count(p) AS projectsLocked"
             result=session.run(lock, name=project_name, initials=str(analyst_initials).upper())
             if result.single().get("projectLocked"):
                 return {"status":"success"}

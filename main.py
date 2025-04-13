@@ -39,14 +39,25 @@ async def dashboard():
     return {"my_projects": my_projects, "shared_projects": shared_projects}
 
 
-@app.post("/lock/{project_name}/{analyst_initials}")
-async def lock_project(project_name: str, analyst_initials: str):
+@app.post("/lock/{projectName}/{analyst_initials}")
+async def lock_project(projectName: str, analyst_initials: str):
     analyst_initials = "MR"
-    result = pm.lock_project(project_name, analyst_initials)
-    return {"status": "success", "project": project_name}
+    result = pm.lock_project(projectName, analyst_initials)
+    return {"status": "success", "project": projectName}
 
-@app.post("/unlock/{project_name}/{analyst_initials}")
-async def unlock_project(project_name: str):
+@app.post("/unlock/{projectName}/{analyst_initials}")
+async def unlock_project(projectName: str, analyst_initials:str):
     analyst_intials="MR"
-    result = pm.unlock_project(project_name, analyst_intials)
-    return {"status": "success", "project": project_name}
+    result = pm.unlock_project(projectName, analyst_initials)
+    return {"status": "success", "project": projectName}
+
+@app.post("/create/")
+async def create_project(project_name: str = Form(...),
+    description: str = Form(...),
+    machine_IP: str = Form(...),
+    status: str = Form(...),
+    lead_analyst_initials: str = Form(...),
+    locked: str = Form(...),
+    files: list[UploadFile] = File(default=[])):
+    result=pm.create_project(project_name, locked, description, machine_IP, status, lead_analyst_initials, files)
+    return {"status": "success"}

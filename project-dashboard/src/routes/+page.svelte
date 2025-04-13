@@ -18,7 +18,7 @@
   
     async function fetchProjects() {
       try {
-        const response = await fetch('http://localhost:8000/');
+        const response = await fetch('http://localhost:9000/');
         if (!response.ok) {
           throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
         }
@@ -61,12 +61,12 @@
     // Watch for changes in search and filter
     $: searchQuery, statusFilter, applyFilters();
   
-    async function lockProject(projectName) {
+    async function lockProject(projectName, analyst_initials) {
       try {
-        const response = await fetch(`http://localhost:8000/lock/${projectName}`, {
+        const response = await fetch(`http://localhost:9000/lock/${projectName}/${analyst_initials}`, {
           method: 'POST'
         });
-        if (response.ok) {
+        if (response.ok) { 
           myProjects = myProjects.map(project =>
             project.name === projectName ? { ...project, locked: true, Status: 'Inactive' } : project
           );
@@ -79,9 +79,9 @@
       }
     }
   
-    async function restoreProject(projectName) {
+    async function restoreProject(projectName, analyst_initials) {
       try {
-        const response = await fetch(`http://localhost:8000/restore/${projectName}`, {
+        const response = await fetch(`http://localhost:9000/unlock/${projectName}/${analyst_initials}`, {
           method: 'POST'
         });
         if (response.ok) {
@@ -130,7 +130,7 @@
           <div class="card-body">
             <h5 class="card-title">{project.name}</h5>
             <p class="card-text">
-              Last Edit: {project.last_edit_date || project.Stamp_Date || 'N/A'}
+              Last Edit: {project.last_edit_date.slice(0,10)+" T:"+ project.last_edit_date.slice(11,19) || project.Stamp_Date.slice(0,10) +" T:"+ project.Stamp_Date.slice(11,19)|| 'N/A'}
             </p>
           </div>
           <div class="card-footer {project.Status === 'Active' ? 'border-success' : project.Status === 'Error' ? 'border-danger' : 'border-secondary'}">
@@ -215,13 +215,13 @@
             {#each filteredMyProjects as project}
               <tr data-project-name={project.name}>
                 <td>{project.name}</td>
-                <td>{project.last_edit_date || project.Stamp_Date || 'N/A'}</td>
-                <td>{project.lead_analyst_initials || 'N/A'}</td>
+                <td>{project.last_edit_date.slice(0,10)+" T:"+ project.last_edit_date.slice(11,19)|| project.Stamp_Date.slice(0,10) +" T:"+ project.Stamp_Date.slice(11,19) || 'N/A'}</td>
+                <td>{project.analyst_initials || 'N/A'}</td>
                 <td>
                   <span
-                    class="badge {project.Status === 'Active'
+                    class="badge {project.locked === false
                       ? 'bg-success'
-                      : project.Status === 'Error'
+                      : project.locked === true
                       ? 'bg-danger'
                       : 'bg-secondary'}"
                   >
@@ -240,30 +240,40 @@
                     <button
                       class="btn btn-sm btn-outline-secondary"
                       type="button"
-                      id="dropdownMenuButton-{project.name}"
+                      id={"dropdownMenuButton-"+project.name}
                       data-bs-toggle="dropdown"
                       aria-expanded="false"
                     >
                       ⋮
                     </button>
-                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton-{project.name}">
+                    <ul class="dropdown-menu" aria-labelledby={"dropdownMenuButton-"+project.name}>
                       {#if project.locked}
                         <li>
                           <button
                             class="dropdown-item"
-                            on:click={() => restoreProject(project.name)}
+                            on:click={() => restoreProject(project.name, "MR")}
                           >
                             Restore
                           </button>
+                          <button
+                          class="dropdown-item"
+                          >
+                          Delete
+                        </button>
                         </li>
                       {:else}
                         <li>
                           <button
                             class="dropdown-item"
-                            on:click={() => lockProject(project.name)}
+                            on:click={() => lockProject(project.name, "MR")}
                           >
                             Lock
                           </button>
+                          <button
+                          class="dropdown-item"
+                          >
+                          Delete
+                        </button>
                         </li>
                       {/if}
                     </ul>
@@ -295,8 +305,8 @@
             {#each filteredSharedProjects as project}
               <tr>
                 <td>{project.name}</td>
-                <td>{project.last_edit_date || project.Stamp_Date || 'N/A'}</td>
-                <td>{project.lead_analyst_initials || 'N/A'}</td>
+                <td>{project.last_edit_date.slice(0,10)+" T:"+ project.last_edit_date.slice(11,19)|| project.Stamp_Date.slice(0,10) +" T:"+ project.Stamp_Date.slice(11,19) || 'N/A'}</td>
+                <td>{project.analyst_initials || 'N/A'}</td>
                 <td>
                   <span
                     class="badge {project.Status === 'Active'
