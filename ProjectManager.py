@@ -103,6 +103,9 @@ class ProjectManager:
 
     def get_all_projects(self):
         return self.neo4j.get_all_projects()
+    
+    def get_folders(self):
+        return self.neo4j.get_folders()
 
     #doesnt work anymore
     #def get_deleted_projects(self):

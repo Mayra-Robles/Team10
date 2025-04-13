@@ -157,6 +157,12 @@ class Neo4jInteractive:
         with self.driver.session() as session:
             session.run(query, path=str(path))
             return {"status": "success"}
+        
+    def get_folders(self):
+        query="MATCH (f:Folder) RETURN f"
+        with self.driver.session() as session:
+            result=session.run(query)
+            return [dict(record["f"]) for record in result]
     
     def add_project_to_folder(self, project_name, folder_path):
         if not all([project_name, folder_path]):

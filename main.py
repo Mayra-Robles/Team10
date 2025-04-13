@@ -38,6 +38,15 @@ async def dashboard():
             project["Stamp_Date"] = project["Stamp_Date"].iso_format()
     return {"my_projects": my_projects, "shared_projects": shared_projects}
 
+@app.get("/folders/")
+async def get_folders():
+    result=pm.get_folders()
+    return {"my_folders": result}
+
+@app.post("/delete/{projectName}")
+async def delete_project(projectName:str):
+    result=pm.delete_project(projectName)
+    return result
 
 @app.post("/lock/{projectName}/{analyst_initials}")
 async def lock_project(projectName: str, analyst_initials: str):

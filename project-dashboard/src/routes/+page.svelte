@@ -96,6 +96,22 @@
         error = err.message;
       }
     }
+
+    async function deleteProject(projectName) {
+        try{
+            const response= await fetch(`http://localhost:9000/delete/${projectName}`,{
+                method: 'POST'
+            });
+            if (response.ok){
+                fetchProjects();
+            }
+            else {
+                throw new Error('Failed to delete project');
+            }      
+        }catch (err){
+            error =err.message;
+        }
+    }
   
     // Placeholder for Run Scan
     function runScan(projectName) {
@@ -126,7 +142,7 @@
   <div class="row">
     {#each myProjects.slice(0, 3) as project}
       <div class="col-md-4 mb-3">
-        <div class="card h-100">
+        <div class="card h-100 clickable-card">
           <div class="card-body">
             <h5 class="card-title">{project.name}</h5>
             <p class="card-text">
@@ -257,6 +273,7 @@
                           </button>
                           <button
                           class="dropdown-item"
+                          on:click={()=>deleteProject(project.name)}
                           >
                           Delete
                         </button>
@@ -271,6 +288,7 @@
                           </button>
                           <button
                           class="dropdown-item"
+                          on:click={()=>deleteProject(project.name)}
                           >
                           Delete
                         </button>
@@ -351,6 +369,9 @@
     .create-btn {
       background-color: #007bff;
     }
+    .create-btn:hover {
+        background-color: black;
+    }
     .import-icon {
       font-size: 1.2rem;
       margin-right: 0.5rem;
@@ -360,5 +381,12 @@
     }
     .badge {
       font-size: 0.9rem;
+    }
+    .clickable-card {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .clickable-card:hover {
+        background-color: #0000004e;
     }
   </style>
