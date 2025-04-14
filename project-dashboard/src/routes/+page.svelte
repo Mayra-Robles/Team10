@@ -60,58 +60,52 @@
   
     // Watch for changes in search and filter
     $: searchQuery, statusFilter, applyFilters();
-  
-    async function lockProject(projectName, analyst_initials) {
-      try {
-        const response = await fetch(`http://localhost:9000/lock/${projectName}/${analyst_initials}`, {
-          method: 'POST'
-        });
-        if (response.ok) { 
-          myProjects = myProjects.map(project =>
-            project.name === projectName ? { ...project, locked: true, Status: 'Inactive' } : project
-          );
-          applyFilters();
-        } else {
-          throw new Error('Failed to lock project');
-        }
-      } catch (err) {
-        error = err.message;
-      }
-    }
-  
-    async function restoreProject(projectName, analyst_initials) {
-      try {
-        const response = await fetch(`http://localhost:9000/unlock/${projectName}/${analyst_initials}`, {
-          method: 'POST'
-        });
-        if (response.ok) {
-          myProjects = myProjects.map(project =>
-            project.name === projectName ? { ...project, locked: false, Status: 'Active' } : project
-          );
-          applyFilters();
-        } else {
-          throw new Error('Failed to restore project');
-        }
-      } catch (err) {
-        error = err.message;
-      }
-    }
 
-    async function deleteProject(projectName) {
-        try{
-            const response= await fetch(`http://localhost:9000/delete/${projectName}`,{
-                method: 'POST'
-            });
-            if (response.ok){
-                fetchProjects();
-            }
-            else {
-                throw new Error('Failed to delete project');
-            }      
-        }catch (err){
-            error =err.message;
-        }
+    async function lockProject(projectName, analyst_initials) {
+    try {
+      const response = await fetch(`http://localhost:9000/lock/${projectName}/${analyst_initials}`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        // Update myProjects
+        myProjects = myProjects.map(project =>
+          project.name === projectName ? { ...project, locked: true, Status: 'Inactive' } : project
+        );
+        // Update sharedProjects if the project exists there
+        sharedProjects = sharedProjects.map(project =>
+          project.name === projectName ? { ...project, locked: true, Status: 'Inactive' } : project
+        );
+        applyFilters(); // Refresh filtered lists
+      } else {
+        throw new Error('Failed to lock project');
+      }
+    } catch (err) {
+      error = err.message;
     }
+  }
+
+  async function restoreProject(projectName, analyst_initials) {
+    try {
+      const response = await fetch(`http://localhost:9000/unlock/${projectName}/${analyst_initials}`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        // Update myProjects
+        myProjects = myProjects.map(project =>
+          project.name === projectName ? { ...project, locked: false, Status: 'Active' } : project
+        );
+        // Update sharedProjects if the project exists there
+        sharedProjects = sharedProjects.map(project =>
+          project.name === projectName ? { ...project, locked: false, Status: 'Active' } : project
+        );
+        applyFilters(); // Refresh filtered lists
+      } else {
+        throw new Error('Failed to restore project');
+      }
+    } catch (err) {
+      error = err.message;
+    }
+  }
   
     // Placeholder for Run Scan
     function runScan(projectName) {
@@ -310,51 +304,57 @@
   
     <!-- Shared Projects Tab -->
     <div class="tab-pane fade" id="shared-projects" role="tabpanel" aria-labelledby="shared-projects-tab">
-      {#if filteredSharedProjects.length > 0}
+        {#if filteredSharedProjects.length > 0}
         <table class="table table-striped">
-          <thead>
+            <thead>
             <tr>
-              <th>Project Name</th>
-              <th>Last Edit</th>
-              <th>Lead Analyst</th>
-              <th>Status</th>
-              <th>Actions</th>
+                <th>Project Name</th>
+                <th>Last Edit</th>
+                <th>Lead Analyst</th>
+                <th>Port</th>
+                <th>Status</th>
+                <th>Actions</th>
             </tr>
-          </thead>
-          <tbody>
+            </thead>
+            <tbody>
             {#each filteredSharedProjects as project}
-              <tr>
+                <tr>
                 <td>{project.name}</td>
-                <td>{project.last_edit_date.slice(0,10)+" T:"+ project.last_edit_date.slice(11,19)|| project.Stamp_Date.slice(0,10) +" T:"+ project.Stamp_Date.slice(11,19) || 'N/A'}</td>
+                <td>{project.last_edit_date?.slice(0,10) + " T:" + project.last_edit_date?.slice(11,19) || project.Stamp_Date?.slice(0,10) + " T:" + project.Stamp_Date?.slice(11,19) || 'N/A'}</td>
                 <td>{project.analyst_initials || 'N/A'}</td>
+                <td>{project.port_number || 'N/A'}</td>
                 <td>
-                  <span
+                    <span
                     class="badge {project.Status === 'Active'
-                      ? 'bg-success'
-                      : project.Status === 'Error'
-                      ? 'bg-danger'
-                      : 'bg-secondary'}"
-                  >
+                        ? 'bg-success'
+                        : project.Status === 'Inactive'
+                        ? 'bg-secondary'
+                        : project.Status === 'Error'
+                        ? 'bg-danger'
+                        : 'bg-secondary'}"
+                    >
                     {project.Status}
-                  </span>
+                    </span>
                 </td>
                 <td>
-                  <button
+                    <button
                     class="btn btn-sm btn-primary"
                     disabled={project.Status !== 'Active'}
-                    on:click={() => runScan(project.name)}
-                  >
-                    Run Scan
-                  </button>
+                    on:click={() => joinProject(project.name, project.port_number)}
+                    title="Join this project session."
+                    >
+                    Join
+                    </button>
                 </td>
-              </tr>
+                </tr>
             {/each}
-          </tbody>
+            </tbody>
         </table>
-      {:else}
+        {:else}
         <p>No shared projects match your criteria.</p>
-      {/if}
+        {/if}
     </div>
+
   </div>
   
   {#if showCreateModal}
