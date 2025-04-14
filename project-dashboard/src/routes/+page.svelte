@@ -106,6 +106,23 @@
       error = err.message;
     }
   }
+
+  async function deleteProject(projectName) {
+        try{
+            const response= await fetch(`http://localhost:9000/delete/${projectName}`,{
+                method: 'POST'
+            });
+            if (response.ok){
+                fetchProjects();
+            }
+            else {
+                throw new Error('Failed to delete project');
+            }      
+        }catch (err){
+            error =err.message;
+        }
+    }
+  
   
     // Placeholder for Run Scan
     function runScan(projectName) {
