@@ -2,8 +2,8 @@ import datetime
 
 class Project:
     def __init__(self, project_name, start_date, time, lead_analyst_initials, 
-                 description, machine_ip, list_files = "", file_paths=None, is_locked=False, status="active",
-                 created_date=None, last_edit_date=None, folder_path=None):
+                 description, machine_ip, deleted_date, list_files = "", file_paths=None, is_locked=False, status="active",
+                 created_date=None, last_edit_date=None, folder_path=None, is_deleted=False):
         self.project_name = project_name #
         self.description = description #
         self.start_date = start_date
@@ -16,6 +16,9 @@ class Project:
         self.folder_path = folder_path or f"projects/{project_name}"
         self.machine_ip = machine_ip # Added
         self.list_files = list_files # Added
+        self.is_deleted=is_deleted
+        self.deleted_date= deleted_date
+        
 
     def get_info(self):
         return {
@@ -30,7 +33,9 @@ class Project:
             "last_edit_date": self.last_edit_date,
             "folder_path": self.folder_path,
             "Machine IP": self.machine_ip, 
-            "Files": self.list_files
+            "Files": self.list_files,
+            "is_deleted": self.is_deleted,
+            "deleted_date": self.deleted_date
         }
 
     def lock(self):
@@ -38,6 +43,12 @@ class Project:
 
     def unlock(self):
         self.is_locked = False
+
+    def set_deleted(self):
+        self.is_deleted=True
+
+    def unset_deleted(self):
+        self.is_deleted=False
 
     def update_status(self, new_status):
         if new_status in ["active", "errors", "inactive"]:

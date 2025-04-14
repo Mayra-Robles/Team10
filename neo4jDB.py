@@ -72,7 +72,7 @@ class Neo4jInteractive:
         todayDate=datetime.now()
         formatDate = todayDate.strftime("%Y-%m-%dT%H:%M:%S")
         query= """CREATE (p: Project {name: $name, locked:$locked_status, 
-                Stamp_Date: datetime($Stamp_Date), description: $description, MachineIP: $MachineIP, Status: $Status, files: $files, last_edit_date: datetime($last_edit)})"""
+                Stamp_Date: datetime($Stamp_Date), description: $description, MachineIP: $MachineIP, Status: $Status, files: $files, last_edit_date: datetime($last_edit), is_deleted:false})"""
         with self.driver.session() as session:
             session.run(query, name=str(Project_Name), locked_status=locked_bool, Stamp_Date=formatDate, description=str(description), MachineIP=str(MachineIP), Status=str(status).capitalize(), files=[]if list_files=="" else list(list_files), last_edit=formatDate)
             return {"status": "success"}
@@ -91,7 +91,22 @@ class Neo4jInteractive:
     # @returns: JSON format of all projects updated
     def delete_project(self, project_name):
         with self.driver.session() as session:
-            query = "MATCH (p:Project {name: $project_name}) DETACH DELETE p"
+            query = """ MATCH (p:Project {name: $project_name})
+                        WHERE p.is_deleted = true
+                        DETACH DELETE p
+                        UNION
+                        MATCH (p:Project {name: $project_name})
+                        WHERE p.is_deleted = false
+                        SET p.is_deleted = true, p.deleted_date= datetime($delete_date)
+                    """
+            todayDate=datetime.now()
+            formatDate = todayDate.strftime("%Y-%m-%dT%H:%M:%S")
+            session.run(query, project_name=project_name, delete_date=formatDate)
+            return {"status": "success"}
+        
+    def restore_project(self, project_name):
+        with self.driver.session() as session:
+            query= """MATCH (p:Project {name: $project_name}) SET p.is_deleted= false, p.deleted_date=null """
             session.run(query, project_name=project_name)
             return {"status": "success"}
 

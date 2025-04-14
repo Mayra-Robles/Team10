@@ -228,7 +228,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each filteredMyProjects as project}
+            {#each filteredMyProjects.filter(project=>project.is_deleted===false) as project}
               <tr data-project-name={project.name}>
                 <td>{project.name}</td>
                 <td>{project.last_edit_date.slice(0,10)+" T:"+ project.last_edit_date.slice(11,19)|| project.Stamp_Date.slice(0,10) +" T:"+ project.Stamp_Date.slice(11,19) || 'N/A'}</td>

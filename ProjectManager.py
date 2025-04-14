@@ -53,6 +53,10 @@ class ProjectManager:
     def delete_project(self, project_name):
         result = self.neo4j.delete_project(project_name)
         return result.get("status") == "success" if isinstance(result, dict) else True
+    
+    def restore_project(self, project_name):
+        result= self.neo4j.restore_project(project_name)
+        return result.get("status")== "success" if isinstance(result, dict) else True
 
     #not needed (unlest we implement soft delete again)
     #def restore_project(self, project_name):

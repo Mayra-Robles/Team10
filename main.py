@@ -31,6 +31,8 @@ async def dashboard():
             project["last_edit_date"] = project["last_edit_date"].iso_format()
         if "Stamp_Date" in project and isinstance(project["Stamp_Date"], neo4j.time.DateTime):
             project["Stamp_Date"] = project["Stamp_Date"].iso_format()
+        if "deleted_date" in project and isinstance(project["deleted_date"], neo4j.time.DateTime):
+            project["deleted_date"]=project["deleted_date"].iso_format()
     for project in shared_projects:
         if "last_edit_date" in project and isinstance(project["last_edit_date"], neo4j.time.DateTime):
             project["last_edit_date"] = project["last_edit_date"].iso_format()
@@ -47,6 +49,10 @@ async def get_folders():
 async def delete_project(projectName:str):
     result=pm.delete_project(projectName)
     return result
+
+@app.post("/restore/{projectName}")
+async def restore_project(projectName: str):
+    return pm.restore_project(projectName)
 
 @app.post("/lock/{projectName}/{analyst_initials}")
 async def lock_project(projectName: str, analyst_initials: str):
