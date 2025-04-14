@@ -166,13 +166,15 @@ class Neo4jInteractive:
     # @params: path: string with the path or name for the folder
     # @returns: JSON with success or failure status        
     def create_folder(self, path):
+        todayDate=datetime.now()
+        formatDate = todayDate.strftime("%Y-%m-%dT%H:%M:%S")
         if not path:
             return {"status":"failure", "error": "No name received"}
-        query="""CREATE (:Folder {path:$path})"""
+        query="""CREATE (:Folder {path:$path,  creation_date:datetime($creation_date)})"""
         with self.driver.session() as session:
-            session.run(query, path=str(path))
+            session.run(query, path=str(path), creation_date=formatDate)
             return {"status": "success"}
-        
+  
     def get_folders(self):
         query="MATCH (f:Folder) RETURN f"
         with self.driver.session() as session:
@@ -361,3 +363,6 @@ def is_ip_valid(ip):
             return False
     
     return True
+
+
+

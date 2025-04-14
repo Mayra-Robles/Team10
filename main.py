@@ -43,6 +43,9 @@ async def dashboard():
 @app.get("/folders/")
 async def get_folders():
     result=pm.get_folders()
+    for folders in result:
+        if "creation_date" in folders and isinstance(folders["creation_date"], neo4j.time.DateTime):
+            folders["creation_date"]=folders["creation_date"].iso_format()
     return {"my_folders": result}
 
 @app.post("/delete/{projectName}")
