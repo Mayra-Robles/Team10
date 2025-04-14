@@ -234,10 +234,12 @@
                 <td>{project.last_edit_date.slice(0,10)+" T:"+ project.last_edit_date.slice(11,19)|| project.Stamp_Date.slice(0,10) +" T:"+ project.Stamp_Date.slice(11,19) || 'N/A'}</td>
                 <td>{project.analyst_initials || 'N/A'}</td>
                 <td>
-                  <span
-                    class="badge {project.locked === false
+                <span
+                    class="badge {project.Status === 'Active'
                       ? 'bg-success'
-                      : project.locked === true
+                      : project.Status === 'Inactive'
+                      ? 'bg-secondary'
+                      : project.Status === 'Error'
                       ? 'bg-danger'
                       : 'bg-secondary'}"
                   >
