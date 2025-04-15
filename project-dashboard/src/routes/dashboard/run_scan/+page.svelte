@@ -112,6 +112,6 @@
     }
   
     .clickable-card:hover {
-      background-color: #f8f9fa;
+      background-color: #00000012;
     }
   </style>
