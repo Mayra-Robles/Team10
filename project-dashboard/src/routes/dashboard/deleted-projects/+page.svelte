@@ -3,15 +3,17 @@
   
     let deletedProjects = [];
     let error = null;
+    let initials ='';
   
     // Fetch projects on mount
     onMount(async () => {
+      initials= sessionStorage.getItem('analyst_initials');
       await fetchProjects();
     });
   
     async function fetchProjects() {
       try {
-        const response = await fetch('http://localhost:9000/dashboard/');
+        const response = await fetch(`http://localhost:9000/dashboard/${initials}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
         }
