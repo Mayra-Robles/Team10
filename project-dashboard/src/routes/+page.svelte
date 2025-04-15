@@ -7,12 +7,12 @@
   
     async function handleStart() {
         try{
-            const response = await fetch(`http://localhost:9000/analyst/${initials}`,{
+            const response = await fetch(`http://localhost:9000/analyst/${initials}/`,{
                 method: 'POST'
             });
             const data= await response.json();
-            console.log(initials)
             if (data['status']==='success'){
+                sessionStorage.setItem('analyst_initials', initials);
                 goto('/dashboard');
                 
             }else{

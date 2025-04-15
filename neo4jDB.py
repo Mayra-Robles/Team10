@@ -334,11 +334,11 @@ class Neo4jInteractive:
     def get_my_projects(self, analyst_initials):
         query = """
         MATCH (u:Analyst {initials: $initials})-[:OWNS]->(p:Project)
-        RETURN p
+        RETURN p, u.initials AS analyst_initials
         """
         with self.driver.session() as session:
             result = session.run(query, initials=str(analyst_initials).upper())
-            return [dict(record["p"]) for record in result]
+            return [{**dict(record["p"]), "analyst_initials":record["analyst_initials"]} for record in result]
     
     def get_Analyst(self):
         query="MATCH (a:Analyst) RETRUN a"

@@ -21,10 +21,10 @@ def serialize_datetime(obj):
         return obj.iso_format()
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
-@app.get("/dashboard/")
-async def dashboard():
+@app.get("/dashboard/{initials}")
+async def dashboard(initials):
     lead_analyst_initials = "MR"
-    my_projects = pm.get_all_projects()
+    my_projects = pm.get_my_projects(initials)
     shared_projects = pm.get_shared_projects(lead_analyst_initials)
     for project in my_projects:
         if "last_edit_date" in project and isinstance(project["last_edit_date"], neo4j.time.DateTime):

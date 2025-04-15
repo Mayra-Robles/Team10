@@ -6,8 +6,8 @@
     const navItems = [
       { name: 'Project Selection', icon: '📁', route: '/dashboard/', hoverText: 'Access project selection' },
       { name: 'Project Folders', icon: '📂', route: '/dashboard/project-folders/', hoverText: 'Access project folders' },
-      { name: 'Deleted Projects', icon: '🗑️', route: '/dashboard/deleted-projects', hoverText: 'Open archived projects' },
-      { name: 'Settings', icon: '⚙️', route: '/dashboard/settings', hoverText: 'Configure settings' }
+      { name: 'Deleted Projects', icon: '🗑️', route: '/dashboard/deleted-projects/', hoverText: 'Open archived projects' },
+      { name: 'Settings', icon: '⚙️', route: '/dashboard/settings/', hoverText: 'Configure settings' }
     ];
   
     function handleLogoClick() {

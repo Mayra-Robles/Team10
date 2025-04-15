@@ -121,7 +121,6 @@ class ProjectManager:
     #    return [{key: r["p"][key] for key in r["p"].keys()} for r in records]
 
     def get_my_projects(self, lead_analyst_initials):
-        print(self.neo4j.get_my_projects(lead_analyst_initials))
         return self.neo4j.get_my_projects(lead_analyst_initials)
 
     def get_shared_projects(self, lead_analyst_initials):

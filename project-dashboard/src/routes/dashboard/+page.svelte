@@ -11,6 +11,7 @@
     let searchQuery = '';
     let statusFilter = 'All';
     let recent_projects=[];
+    let initials= sessionStorage.getItem('analyst_initials')
   
     // Fetch projects on mount
     onMount(async () => {
@@ -19,7 +20,7 @@
   
     async function fetchProjects() {
       try {
-        const response = await fetch('http://localhost:9000/dashboard/');
+        const response = await fetch(`http://localhost:9000/dashboard/${initials}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
         }

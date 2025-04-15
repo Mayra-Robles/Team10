@@ -13,7 +13,7 @@
 
   async function fetchFolders() {
     try {
-      const response = await fetch('http://localhost:9000/folders');
+      const response = await fetch('http://localhost:9000/folders/');
       if (!response.ok) {
         throw new Error(`Failed to fetch folders: ${response.status} ${response.statusText}`);
       }

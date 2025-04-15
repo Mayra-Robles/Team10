@@ -27,7 +27,7 @@
   
     async function restoreProject(projectName) {
       try {
-        const response = await fetch(`http://localhost:9000/restore/${projectName}`, {
+        const response = await fetch(`http://localhost:9000/restore/${projectName}/`, {
           method: 'POST'
         });
         if (response.ok) {
@@ -42,7 +42,7 @@
   
     async function deleteForever(projectName) {
       try {
-        const response = await fetch(`http://localhost:9000/delete/${projectName}`, {
+        const response = await fetch(`http://localhost:9000/delete/${projectName}/`, {
           method: 'POST'
         });
         if (response.ok) {
