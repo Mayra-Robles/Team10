@@ -10,6 +10,7 @@
     let error = null;
     let searchQuery = '';
     let statusFilter = 'All';
+    let recent_projects=[];
   
     // Fetch projects on mount
     onMount(async () => {
@@ -26,6 +27,12 @@
         console.log('Fetched data:', data);
         myProjects = data.my_projects || [];
         sharedProjects = data.shared_projects || [];
+        recent_projects=[...myProjects]
+        recent_projects.sort((a,b)=> {
+        const dateA=Date.parse(a.last_edit_date);
+        const dateB= Date.parse(b.last_edit_date);
+        return dateB-dateA;
+      })
         applyFilters();
       } catch (err) {
         error = 'Failed to load projects: ' + err.message;
@@ -151,7 +158,7 @@
   <!-- Recent Projects -->
   <h2 class="mt-4">Recent Projects</h2>
   <div class="row">
-    {#each myProjects.slice(0, 3) as project}
+    {#each recent_projects.slice(0, 3) as project}
       <div class="col-md-4 mb-3">
         <div class="card h-100 clickable-card">
           <div class="card-body">
