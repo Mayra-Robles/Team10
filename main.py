@@ -84,3 +84,22 @@ async def create_project(project_name: str = Form(...),
 async def check_login(initials:str):
     result= pm.check_login(initials)
     return result
+
+@app.get("/export/{projectName}")
+async def export_project(projectName: str):
+    try:
+        result = pm.export_project(projectName)
+        if result["status"] == "success":
+            # Serialize any datetime objects in the result
+            for project in [result["data"]["project"]]:
+                if "stamp_date" in project and isinstance(project["stamp_date"], neo4j.time.DateTime):
+                    project["stamp_date"] = project["stamp_date"].iso_format()
+                if "last_edit_date" in project and isinstance(project["last_edit_date"], neo4j.time.DateTime):
+                    project["last_edit_date"] = project["last_edit_date"].iso_format()
+                if "deleted_date" in project and project["deleted_date"] and isinstance(project["deleted_date"], neo4j.time.DateTime):
+                    project["deleted_date"] = project["deleted_date"].iso_format()
+            return result
+        else:
+            return {"status": "failure", "error": result.get("error", "Failed to export project")}
+    except Exception as e:
+        return {"status": "failure", "error": f"Export failed: {str(e)}"}

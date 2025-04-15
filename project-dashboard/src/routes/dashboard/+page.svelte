@@ -132,6 +132,35 @@
             error =err.message;
         }
     }
+
+    async function exportProject(projectName) {
+    try {
+      const response = await fetch(`http://localhost:9000/export/${projectName}`, {
+        method: 'GET'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to export project');
+      }
+      const data = await response.json();
+      if (data.status === 'success') {
+        const jsonStr = JSON.stringify(data.data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${projectName}_export.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        throw new Error(data.error || 'Failed to export project');
+      }
+    } catch (err) {
+      error = 'Failed to export project: ' + err.message;
+      console.error('Export error:', err);
+    }
+  }
   
   
     // Placeholder for Run Scan
@@ -255,7 +284,7 @@
                 <td>{project.last_edit_date.slice(0,10)+" T:"+ project.last_edit_date.slice(11,19)|| project.Stamp_Date.slice(0,10) +" T:"+ project.Stamp_Date.slice(11,19) || 'N/A'}</td>
                 <td>{project.analyst_initials || 'N/A'}</td>
                 <td>
-                <span
+                  <span
                     class="badge {project.Status === 'Active'
                       ? 'bg-success'
                       : project.Status === 'Inactive'
@@ -295,11 +324,11 @@
                             Restore
                           </button>
                           <button
-                          class="dropdown-item"
-                          on:click={()=>deleteProject(project.name)}
+                            class="dropdown-item"
+                            on:click={() => deleteProject(project.name)}
                           >
-                          Delete
-                        </button>
+                            Delete
+                          </button>
                         </li>
                       {:else}
                         <li>
@@ -310,13 +339,21 @@
                             Lock
                           </button>
                           <button
-                          class="dropdown-item"
-                          on:click={()=>deleteProject(project.name)}
+                            class="dropdown-item"
+                            on:click={() => deleteProject(project.name)}
                           >
-                          Delete
-                        </button>
+                            Delete
+                          </button>
                         </li>
                       {/if}
+                      <li>
+                        <button
+                          class="dropdown-item"
+                          on:click={() => exportProject(project.name)}
+                        >
+                          Export
+                        </button>
+                      </li>
                     </ul>
                   </div>
                 </td>

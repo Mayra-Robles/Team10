@@ -141,6 +141,71 @@ class Neo4jInteractive:
                     }
 
         return {"status": "success"}
+    
+
+    def export_project(self, project_name):
+        """
+        Exports a project's data including its properties, associated analysts, and results.
+        
+        Args:
+            project_name (str): Name of the project to export
+            
+        Returns:
+            dict: JSON-compatible dictionary containing project data, analysts, and results
+        """
+        with self.driver.session() as session:
+            # Query to get project details, owning analyst, participating analysts, and results
+            query = """
+            MATCH (p:Project {name: $project_name})
+            OPTIONAL MATCH (p)<-[:OWNS]-(owner:Analyst)
+            OPTIONAL MATCH (p)<-[:inProject]-(participant:Analyst)
+            OPTIONAL MATCH (p)-[:HAS_RESULT]->(r:Result)
+            RETURN p, 
+                   collect(DISTINCT owner) AS owners,
+                   collect(DISTINCT participant) AS participants,
+                   collect(DISTINCT r) AS results
+            """
+            result = session.run(query, project_name=project_name)
+            record = result.single()
+            
+            if not record:
+                return {"status": "failure", "error": "Project not found"}
+                
+            project_data = dict(record["p"])
+            owners = [dict(owner) for owner in record["owners"]]
+            participants = [dict(participant) for participant in record["participants"]]
+            results = [dict(result) for result in record["results"]]
+            
+            # Structure the export data
+            export_data = {
+                "project": {
+                    "name": project_data.get("name"),
+                    "locked": project_data.get("locked"),
+                    "stamp_date": project_data.get("Stamp_Date"),
+                    "description": project_data.get("description"),
+                    "machine_ip": project_data.get("MachineIP"),
+                    "status": project_data.get("Status"),
+                    "files": project_data.get("files", []),
+                    "last_edit_date": project_data.get("last_edit_date"),
+                    "is_deleted": project_data.get("is_deleted", False),
+                    "deleted_date": project_data.get("deleted_date")
+                },
+                "owners": [{
+                    "name": owner.get("name"),
+                    "initials": owner.get("initials")
+                } for owner in owners],
+                "participants": [{
+                    "name": participant.get("name"),
+                    "initials": participant.get("initials")
+                } for participant in participants],
+                "results": results
+            }
+            
+            return {
+                "status": "success",
+                "data": export_data
+            }
+
 
 
 
@@ -374,6 +439,4 @@ def is_ip_valid(ip):
             return False
     
     return True
-
-
 

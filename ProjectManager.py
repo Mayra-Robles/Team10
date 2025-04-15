@@ -128,6 +128,10 @@ class ProjectManager:
 
     def check_login(self,lead_analyst_initials):
         return self.neo4j.check_login(lead_analyst_initials)
+    
+    def export_project(self, project_name):
+        return self.neo4j.export_project(project_name)
+
 
 # ---------------- FOR TESTING PURPOSES ONLY ---------------- 
 def main():
