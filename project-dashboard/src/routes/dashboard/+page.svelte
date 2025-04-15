@@ -11,10 +11,12 @@
     let searchQuery = '';
     let statusFilter = 'All';
     let recent_projects=[];
-    let initials= sessionStorage.getItem('analyst_initials')
+    let initials='';
+    
   
     // Fetch projects on mount
     onMount(async () => {
+      initials= sessionStorage.getItem('analyst_initials');
       await fetchProjects();
     });
   
