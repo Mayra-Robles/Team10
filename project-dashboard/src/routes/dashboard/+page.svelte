@@ -82,6 +82,9 @@
         myProjects = myProjects.map(project =>
           project.name === projectName ? { ...project, locked: true, Status: 'Inactive' } : project
         );
+        recent_projects=recent_projects.map(project=>
+          project.name === projectName ? {...project, locked: true, Status: 'Inactive'}: project
+        );
         // Update sharedProjects if the project exists there
         sharedProjects = sharedProjects.map(project =>
           project.name === projectName ? { ...project, locked: true, Status: 'Inactive' } : project
@@ -104,6 +107,9 @@
         // Update myProjects
         myProjects = myProjects.map(project =>
           project.name === projectName ? { ...project, locked: false, Status: 'Active' } : project
+        );
+        recent_projects=recent_projects.map(project=>
+          project.name === projectName ? {...project, locked: falsex, Status: 'Active'}: project
         );
         // Update sharedProjects if the project exists there
         sharedProjects = sharedProjects.map(project =>
@@ -190,26 +196,28 @@
   </div>
   
   <!-- Recent Projects -->
-  <h2 class="mt-4">Recent Projects</h2>
-  <div class="row">
-    {#each recent_projects.slice(0, 3) as project}
-      <div class="col-md-4 mb-3">
-        <div class="card h-100 clickable-card">
-          <div class="card-body">
-            <h5 class="card-title">{project.name}</h5>
-            <p class="card-text">
-              Last Edit: {project.last_edit_date.slice(0,10)+" T:"+ project.last_edit_date.slice(11,19) || project.Stamp_Date.slice(0,10) +" T:"+ project.Stamp_Date.slice(11,19)|| 'N/A'}
-            </p>
-          </div>
-          <div class="card-footer {project.Status === 'Active' ? 'border-success' : project.Status === 'Error' ? 'border-danger' : 'border-secondary'}">
-            <small>Status: {project.Status}</small>
-          </div>
+  <div class="container-fluid mt-4">
+    <h2 class="mt-4">Recent Projects</h2>
+    <div class="row gx-3">
+      {#each recent_projects.slice(0, 3) as project}
+        <div class="col-md-4 mb-3">
+          <button type="button" class="card h-100 clickable-card" on:click={() => runScan(project.name)}>
+            <div class="card-body">
+              <h5 class="card-title">{project.name}</h5>
+              <p class="card-text">
+                Last Edit: {project.last_edit_date.slice(0, 10) + " T:" + project.last_edit_date.slice(11, 19) || project.Stamp_Date.slice(0, 10) + " T:" + project.Stamp_Date.slice(11, 19) || 'N/A'}
+              </p>
+            </div>
+            <div class="card-footer {project.Status === 'Active' ? 'border-success' : project.Status === 'Error' ? 'border-danger' : 'border-secondary'}">
+              <small>Status: {project.Status}</small>
+            </div>
+          </button>
         </div>
-      </div>
-    {/each}
-    {#if myProjects.length === 0}
-      <p>No recent projects available.</p>
-    {/if}
+      {/each}
+      {#if myProjects.length === 0}
+        <p>No recent projects available.</p>
+      {/if}
+    </div>
   </div>
   
   <!-- All Projects -->
@@ -451,8 +459,15 @@
       font-size: 0.9rem;
     }
     .clickable-card {
-        cursor: pointer;
-        transition: background-color 0.2s;
+      cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: 100%; /* Ensure button fills card */
+    padding: 0; /* Remove default button padding */
+    border: none; /* Remove default button border */
+    background: none; /* Remove default button background */
+    text-align: left; /* Align content naturally */
+    border-radius: 0.5rem; /* Match Bootstrap card style */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Card shadow */
     }
     .clickable-card:hover {
         background-color: #0000004e;
