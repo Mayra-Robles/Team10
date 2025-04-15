@@ -1,6 +1,7 @@
 <script>
     import { onMount } from 'svelte';
     import CreateProjectModal from './CreateProjectModal.svelte';
+    import { goto } from '$app/navigation';
   
     let myProjects = [];
     let filteredMyProjects = [];
@@ -135,7 +136,8 @@
   
   
     // Placeholder for Run Scan
-    function runScan(projectName) {
+    async function runScan(projectName) {
+      goto('/dashboard/run_scan');
       console.log(`Running scan for project: ${projectName}`);
       // Implement API call if needed
     }
