@@ -1,418 +1,168 @@
 <script>
-    import { onMount } from 'svelte';
-    import CreateProjectModal from './CreateProjectModal.svelte';
+    import { goto } from '$app/navigation'; // Import the goto function for navigation
   
-    let myProjects = [];
-    let filteredMyProjects = [];
-    let sharedProjects = [];
-    let filteredSharedProjects = [];
-    let showCreateModal = false;
-    let error = null;
-    let searchQuery = '';
-    let statusFilter = 'All';
-    let recent_projects=[];
+    let initials = '';
+    let errorMessage = null;
+    const correctInitials = 'MR'; 
   
-    // Fetch projects on mount
-    onMount(async () => {
-      await fetchProjects();
-    });
-  
-    async function fetchProjects() {
-      try {
-        const response = await fetch('http://localhost:9000/');
-        if (!response.ok) {
-          throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
-        }
-        const data = await response.json();
-        console.log('Fetched data:', data);
-        myProjects = data.my_projects || [];
-        sharedProjects = data.shared_projects || [];
-        recent_projects=[...myProjects]
-        recent_projects.sort((a,b)=> {
-        const dateA=Date.parse(a.last_edit_date);
-        const dateB= Date.parse(b.last_edit_date);
-        return dateB-dateA;
-      })
-        applyFilters();
-      } catch (err) {
-        error = 'Failed to load projects: ' + err.message;
-        console.error('Fetch error:', err);
-      }
-    }
-  
-    // Apply search and filter
-    function applyFilters() {
-      let filtered = myProjects;
-      if (searchQuery) {
-        filtered = filtered.filter(project =>
-          project.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }
-      if (statusFilter !== 'All') {
-        filtered = filtered.filter(project => project.Status === statusFilter);
-      }
-      filteredMyProjects = filtered;
-  
-      filtered = sharedProjects;
-      if (searchQuery) {
-        filtered = filtered.filter(project =>
-          project.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }
-      if (statusFilter !== 'All') {
-        filtered = filtered.filter(project => project.Status === statusFilter);
-      }
-      filteredSharedProjects = filtered;
-    }
-  
-    // Watch for changes in search and filter
-    $: searchQuery, statusFilter, applyFilters();
-
-    async function lockProject(projectName, analyst_initials) {
-    try {
-      const response = await fetch(`http://localhost:9000/lock/${projectName}/${analyst_initials}`, {
-        method: 'POST'
-      });
-      if (response.ok) {
-        // Update myProjects
-        myProjects = myProjects.map(project =>
-          project.name === projectName ? { ...project, locked: true, Status: 'Inactive' } : project
-        );
-        // Update sharedProjects if the project exists there
-        sharedProjects = sharedProjects.map(project =>
-          project.name === projectName ? { ...project, locked: true, Status: 'Inactive' } : project
-        );
-        applyFilters(); // Refresh filtered lists
-      } else {
-        throw new Error('Failed to lock project');
-      }
-    } catch (err) {
-      error = err.message;
-    }
-  }
-
-  async function restoreProject(projectName, analyst_initials) {
-    try {
-      const response = await fetch(`http://localhost:9000/unlock/${projectName}/${analyst_initials}`, {
-        method: 'POST'
-      });
-      if (response.ok) {
-        // Update myProjects
-        myProjects = myProjects.map(project =>
-          project.name === projectName ? { ...project, locked: false, Status: 'Active' } : project
-        );
-        // Update sharedProjects if the project exists there
-        sharedProjects = sharedProjects.map(project =>
-          project.name === projectName ? { ...project, locked: false, Status: 'Active' } : project
-        );
-        applyFilters(); // Refresh filtered lists
-      } else {
-        throw new Error('Failed to restore project');
-      }
-    } catch (err) {
-      error = err.message;
-    }
-  }
-
-  async function deleteProject(projectName) {
+    async function handleStart() {
         try{
-            const response= await fetch(`http://localhost:9000/delete/${projectName}`,{
+            const response = await fetch(`http://localhost:9000/analyst/${initials}`,{
                 method: 'POST'
             });
-            if (response.ok){
-                fetchProjects();
+            const data= await response.json();
+            console.log(initials)
+            if (data['status']==='success'){
+                goto('/dashboard');
+                
+            }else{
+                initials='';
+                throw new Error(`Failed to check analyst`);
             }
-            else {
-                throw new Error('Failed to delete project');
-            }      
-        }catch (err){
-            error =err.message;
+        } catch (err){
+            errorMessage= err.message + ': ERROR';
+            console.error('Fetch error:', err);
         }
-    }
-  
-  
-    // Placeholder for Run Scan
-    function runScan(projectName) {
-      console.log(`Running scan for project: ${projectName}`);
-      // Implement API call if needed
     }
   </script>
   
-  {#if error}
-    <div class="alert alert-danger">{error}</div>
-  {/if}
-  
-  <!-- Header with Title and Buttons -->
-  <div class="d-flex justify-content-between align-items-center mt-4">
-    <h1>Project Selection</h1>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary">
-        <span class="import-icon">🖴</span> Import
-      </button>
-      <button class="btn create-btn text-white" on:click={() => (showCreateModal = true)}>
-        + Create New
-      </button>
-    </div>
-  </div>
-  
-  <!-- Recent Projects -->
-  <h2 class="mt-4">Recent Projects</h2>
-  <div class="row">
-    {#each recent_projects.slice(0, 3) as project}
-      <div class="col-md-4 mb-3">
-        <div class="card h-100 clickable-card">
-          <div class="card-body">
-            <h5 class="card-title">{project.name}</h5>
-            <p class="card-text">
-              Last Edit: {project.last_edit_date.slice(0,10)+" T:"+ project.last_edit_date.slice(11,19) || project.Stamp_Date.slice(0,10) +" T:"+ project.Stamp_Date.slice(11,19)|| 'N/A'}
-            </p>
-          </div>
-          <div class="card-footer {project.Status === 'Active' ? 'border-success' : project.Status === 'Error' ? 'border-danger' : 'border-secondary'}">
-            <small>Status: {project.Status}</small>
-          </div>
-        </div>
-      </div>
-    {/each}
-    {#if myProjects.length === 0}
-      <p>No recent projects available.</p>
-    {/if}
-  </div>
-  
-  <!-- All Projects -->
-  <h2 class="mt-4">All Projects</h2>
-  
-  <!-- Search and Filter Bar -->
-  <div class="d-flex justify-content-end mb-3">
-    <div class="input-group w-50">
-      <input
-        type="text"
-        class="form-control"
-        placeholder="Search projects..."
-        bind:value={searchQuery}
-      />
-      <select class="form-select" bind:value={statusFilter}>
-        <option>All</option>
-        <option>Active</option>
-        <option>Error</option>
-        <option>Inactive</option>
-      </select>
-    </div>
-  </div>
-  
-  <!-- Tabs -->
-  <ul class="nav nav-tabs mt-4" id="projectTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button
-        class="nav-link active"
-        id="my-projects-tab"
-        data-bs-toggle="tab"
-        data-bs-target="#my-projects"
-        type="button"
-        role="tab"
-        aria-controls="my-projects"
-        aria-selected="true"
-      >
-        My Projects
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button
-        class="nav-link"
-        id="shared-projects-tab"
-        data-bs-toggle="tab"
-        data-bs-target="#shared-projects"
-        type="button"
-        role="tab"
-        aria-controls="shared-projects"
-        aria-selected="false"
-      >
-        Shared Projects
-      </button>
-    </li>
-  </ul>
-  
-  <div class="tab-content mt-3" id="projectTabsContent">
-    <!-- My Projects Tab -->
-    <div class="tab-pane fade show active" id="my-projects" role="tabpanel" aria-labelledby="my-projects-tab">
-      {#if filteredMyProjects.length > 0}
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th>Project Name</th>
-              <th>Last Edit</th>
-              <th>Lead Analyst</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each filteredMyProjects.filter(project=>project.is_deleted===false) as project}
-              <tr data-project-name={project.name}>
-                <td>{project.name}</td>
-                <td>{project.last_edit_date.slice(0,10)+" T:"+ project.last_edit_date.slice(11,19)|| project.Stamp_Date.slice(0,10) +" T:"+ project.Stamp_Date.slice(11,19) || 'N/A'}</td>
-                <td>{project.analyst_initials || 'N/A'}</td>
-                <td>
-                <span
-                    class="badge {project.Status === 'Active'
-                      ? 'bg-success'
-                      : project.Status === 'Inactive'
-                      ? 'bg-secondary'
-                      : project.Status === 'Error'
-                      ? 'bg-danger'
-                      : 'bg-secondary'}"
-                  >
-                    {project.Status}
-                  </span>
-                </td>
-                <td class="d-flex gap-2 align-items-center">
-                  <button
-                    class="btn btn-sm btn-primary"
-                    disabled={project.Status !== 'Active'}
-                    on:click={() => runScan(project.name)}
-                  >
-                    Run Scan
-                  </button>
-                  <div class="dropdown">
-                    <button
-                      class="btn btn-sm btn-outline-secondary"
-                      type="button"
-                      id={"dropdownMenuButton-"+project.name}
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      ⋮
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby={"dropdownMenuButton-"+project.name}>
-                      {#if project.locked}
-                        <li>
-                          <button
-                            class="dropdown-item"
-                            on:click={() => restoreProject(project.name, "MR")}
-                          >
-                            Restore
-                          </button>
-                          <button
-                          class="dropdown-item"
-                          on:click={()=>deleteProject(project.name)}
-                          >
-                          Delete
-                        </button>
-                        </li>
-                      {:else}
-                        <li>
-                          <button
-                            class="dropdown-item"
-                            on:click={() => lockProject(project.name, "MR")}
-                          >
-                            Lock
-                          </button>
-                          <button
-                          class="dropdown-item"
-                          on:click={()=>deleteProject(project.name)}
-                          >
-                          Delete
-                        </button>
-                        </li>
-                      {/if}
-                    </ul>
-                  </div>
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      {:else}
-        <p>No projects match your criteria.</p>
-      {/if}
-    </div>
-  
-    <!-- Shared Projects Tab -->
-    <div class="tab-pane fade" id="shared-projects" role="tabpanel" aria-labelledby="shared-projects-tab">
-        {#if filteredSharedProjects.length > 0}
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Project Name</th>
-                <th>Last Edit</th>
-                <th>Lead Analyst</th>
-                <th>Port</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            {#each filteredSharedProjects as project}
-                <tr>
-                <td>{project.name}</td>
-                <td>{project.last_edit_date?.slice(0,10) + " T:" + project.last_edit_date?.slice(11,19) || project.Stamp_Date?.slice(0,10) + " T:" + project.Stamp_Date?.slice(11,19) || 'N/A'}</td>
-                <td>{project.analyst_initials || 'N/A'}</td>
-                <td>{project.port_number || 'N/A'}</td>
-                <td>
-                    <span
-                    class="badge {project.Status === 'Active'
-                        ? 'bg-success'
-                        : project.Status === 'Inactive'
-                        ? 'bg-secondary'
-                        : project.Status === 'Error'
-                        ? 'bg-danger'
-                        : 'bg-secondary'}"
-                    >
-                    {project.Status}
-                    </span>
-                </td>
-                <td>
-                    <button
-                    class="btn btn-sm btn-primary"
-                    disabled={project.Status !== 'Active'}
-                    on:click={() => joinProject(project.name, project.port_number)}
-                    title="Join this project session."
-                    >
-                    Join
-                    </button>
-                </td>
-                </tr>
-            {/each}
-            </tbody>
-        </table>
-        {:else}
-        <p>No shared projects match your criteria.</p>
-        {/if}
-    </div>
-
-  </div>
-  
-  {#if showCreateModal}
-    <CreateProjectModal
-      on:close={() => (showCreateModal = false)}
-      on:projectCreated={() => {
-        showCreateModal = false;
-        fetchProjects();
-      }}
-    />
-  {/if}
-  
   <style>
-    .create-btn {
-      background-color: #007bff;
+    /* Ensure html and body fill the screen */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
     }
-    .create-btn:hover {
-        background-color: black;
+  
+    /* Full-screen landing page with dark gray background */
+    .landing-section {
+      position: relative;
+      height: 100vh;
+      width: 100%;
+      background-color: #1e1e1e;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
     }
-    .import-icon {
-      font-size: 1.2rem;
-      margin-right: 0.5rem;
+  
+    header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    .card-footer {
-      background-color: transparent;
+    header nav a {
+      font-size: 1.125rem;
+      margin: 0 0.75rem;
+      text-decoration: none;
+      color: #4b5563;
     }
-    .badge {
-      font-size: 0.9rem;
+    header nav a:hover {
+      text-decoration: underline;
     }
-    .clickable-card {
-        cursor: pointer;
-        transition: background-color 0.2s;
+  
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 1rem;
+      text-align: center;
     }
-    .clickable-card:hover {
-        background-color: #0000004e;
+  
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .subtitle {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+      max-width: 700px;
+    }
+  
+    .error {
+      color: #b91c1c;
+      font-weight: bold;
+      font-size: 1rem;
+      padding: 0.5rem;
+      border: 1px solid #b91c1c;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      width: 80%;
+      text-align: center;
+    }
+  
+    /*grey box*/
+    .welcome-box {
+      width: 300px;
+      height: 300px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      background-color:#2a2a2a;
+      border-radius: 8px;
+      box-sizing: border-box;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-top: -30px; /* Moves the box upward slightly */
+      text-align: center;
+    }
+  
+    .welcome-box input {
+      font-size: 1rem;
+      padding: 0.5rem;
+      width: 60%;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+  
+    .welcome-box button {
+      font-size: 1rem;
+      padding: 0.5rem;
+      width: 60%;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+  
+    .welcome-box button:hover {
+      background-color: #2563eb;
     }
   </style>
+  
+  <!-- Landing Page -->
+  <div class="landing-section">
+  
+    <!-- Main Content -->
+    <main>
+      <h1>TRACE</h1>
+      <p class="subtitle">
+        A Cybersecurity Platform to Protect Your Digital Assets. Detect Vulnerabilities, Strengthen Defense, and Secure Your Network Seamlessly.
+        Gain Real-Time Insights and Proactive Protection.
+      </p>
+  
+      {#if errorMessage}
+        <p class="error">{errorMessage}</p>
+      {/if}
+  
+      <!-- Welcome Box with initials input and Start button -->
+      <div class="welcome-box">
+        <input
+          type="text"
+          placeholder="Enter your initials"
+          bind:value={initials}
+        />
+        <button on:click={handleStart}>START</button>
+      </div>
+    </main>
+  </div>

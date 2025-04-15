@@ -1,6 +1,6 @@
 <script>
     import { onMount } from 'svelte';
-    import Navbar from '../components/Navbar.svelte';
+    import Navbar from '../../components/Navbar.svelte';
     import 'bootstrap/dist/css/bootstrap.min.css';
   
     // Load Bootstrap JS only in the browser

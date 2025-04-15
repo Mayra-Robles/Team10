@@ -4,14 +4,14 @@
   
     // Navigation items based on your routes
     const navItems = [
-      { name: 'Project Selection', icon: '📁', route: '/', hoverText: 'Access project selection' },
-      { name: 'Project Folders', icon: '📂', route: '/project-folders', hoverText: 'Access project folders' },
-      { name: 'Deleted Projects', icon: '🗑️', route: '/deleted-projects', hoverText: 'Open archived projects' },
-      { name: 'Settings', icon: '⚙️', route: '/settings', hoverText: 'Configure settings' }
+      { name: 'Project Selection', icon: '📁', route: '/dashboard/', hoverText: 'Access project selection' },
+      { name: 'Project Folders', icon: '📂', route: '/dashboard/project-folders/', hoverText: 'Access project folders' },
+      { name: 'Deleted Projects', icon: '🗑️', route: '/dashboard/deleted-projects', hoverText: 'Open archived projects' },
+      { name: 'Settings', icon: '⚙️', route: '/dashboard/settings', hoverText: 'Configure settings' }
     ];
   
     function handleLogoClick() {
-      goto('/'); // Go to root (Project Selection)
+      goto('/dashboard/'); // Go to root (Project Selection)
     }
   </script>
   

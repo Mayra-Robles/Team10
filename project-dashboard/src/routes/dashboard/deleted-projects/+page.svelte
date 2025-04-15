@@ -11,7 +11,7 @@
   
     async function fetchProjects() {
       try {
-        const response = await fetch('http://localhost:9000/');
+        const response = await fetch('http://localhost:9000/dashboard/');
         if (!response.ok) {
           throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
         }

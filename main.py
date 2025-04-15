@@ -21,7 +21,7 @@ def serialize_datetime(obj):
         return obj.iso_format()
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
-@app.get("/")
+@app.get("/dashboard/")
 async def dashboard():
     lead_analyst_initials = "MR"
     my_projects = pm.get_all_projects()
@@ -79,3 +79,8 @@ async def create_project(project_name: str = Form(...),
     files: list[UploadFile] = File(default=[])):
     result=pm.create_project(project_name, locked, description, machine_IP, status, lead_analyst_initials, files)
     return {"status": "success"}
+
+@app.post("/analyst/{initials}/")
+async def check_login(initials:str):
+    result= pm.check_login(initials)
+    return result

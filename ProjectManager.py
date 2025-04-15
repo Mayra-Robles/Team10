@@ -127,6 +127,8 @@ class ProjectManager:
     def get_shared_projects(self, lead_analyst_initials):
         return self.neo4j.get_shared_projects(lead_analyst_initials)
 
+    def check_login(self,lead_analyst_initials):
+        return self.neo4j.check_login(lead_analyst_initials)
 
 # ---------------- FOR TESTING PURPOSES ONLY ---------------- 
 def main():

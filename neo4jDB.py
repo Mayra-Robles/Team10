@@ -280,6 +280,17 @@ class Neo4jInteractive:
             result = session.run(query, name=name)
             return [dict(record) for record in result]
     
+    def check_login(self, analyst_initials):
+        query=""" MATCH (u:Analyst {initials: $analyst_initials})
+                RETURN COUNT(u) AS successLogIn"""
+        with self.driver.session() as session:
+            result= session.run(query, analyst_initials=str(analyst_initials).upper())
+            check= result.single()["successLogIn"]
+            if check > 0:
+                return {"status": "success"}
+            else:
+                return {"status":"failure", "error":"No analyst with initials"}
+
      # Retreives all  the analysts in the database 
     # @params: no parameters
     # @returns: JSON format of all the Analysts 
