@@ -632,10 +632,10 @@
     }
   
     input{
-      color: white;
+      color: rgb(0, 0, 0);
     }
     input:focus {
-      color: white;
+      color: rgb(0, 0, 0);
     }
   
     input::placeholder {
