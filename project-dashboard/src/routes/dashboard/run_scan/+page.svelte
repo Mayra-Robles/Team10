@@ -1,6 +1,6 @@
 <script>
     function gotoCrawler() {
-      window.location.href = "/main/tools/Crawler";
+      window.location.href = "/dashboard/run_scan/Crawler";
     }
     function gotoFuzzer() {
       window.location.href = "/main/tools/Fuzzer";

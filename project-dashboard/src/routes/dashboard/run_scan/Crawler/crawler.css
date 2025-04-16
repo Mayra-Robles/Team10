@@ -1,0 +1,201 @@
+
+.crawlerConfigPage {
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+  
+    color: #1e1e1e;
+    background-color: #f7f7f7;
+  
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  
+    width: 80%;
+    margin: 10vh auto;
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+
+  .crawlerConfigPage form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 500px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #d3d3d3;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    background: #ffffff;
+  }
+  
+  .crawlerConfigPage label {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+    font-size: 16px;
+    color: #444;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+  }
+  
+  .crawlerConfigPage input {
+    padding: 12px 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background-color: #fdfdfd;
+    color: #222;
+  }
+  
+  .crawlerConfigPage input.error {
+    border: 2px solid red;
+  }
+  
+  .crawlerConfigPage .error-message {
+    color: red;
+    font-size: 0.85em;
+    margin-top: 4px;
+  }
+  
+  .crawlerConfigPage span {
+    position: relative;
+    top: 8px;
+    left: 10px;
+    width: max-content;
+    color: #222;
+    background: #ffffff;
+    border-radius: 10px;
+  }
+  
+  .crawlerConfigPage button {
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    background-color: #3b82f6;
+    cursor: pointer;
+    transition: border-color 0.25s;
+    width: 100%;
+    max-width: 450px;
+    color: white;
+  }
+  
+  .crawlerConfigPage button:hover {
+    background-color: #2563eb;
+  }
+  
+  .crawlerConfigPage button:focus,
+  .crawlerConfigPage button:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+  }
+  
+  .crawlerConfigPage .metrics {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  .crawlerConfigPage .metric-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 20%;
+  }
+  
+  .crawlerConfigPage .metric-item strong {
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .crawlerConfigPage .metric-item span {
+    font-size: 1.2em;
+    margin-top: 5px;
+    background-color: transparent;
+  }
+  
+  .crawlerConfigPage .results-table {
+    margin-top: 20px;
+  }
+  
+  .crawlerConfigPage .row {
+    display: flex;
+    flex-direction: row;
+    margin: 10px;
+    padding: 5px;
+  }
+  
+  .crawlerConfigPage .row span {
+    margin-right: 15px;
+  }
+  
+  .crawlerConfigPage .results-container {
+    width: 80%;
+    margin: 20px auto;
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .crawlerConfigPage table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  }
+  
+  .crawlerConfigPage th,
+  .crawlerConfigPage td {
+    padding: 10px;
+    word-break: break-word;
+  }
+  
+  .crawlerConfigPage th {
+    background-color: #3b82f6;
+    color: white;
+  }
+  
+  .crawlerConfigPage td {
+    background-color: #ffffff;
+    color: #333;
+  }
+  
+  .crawlerConfigPage tr:nth-child(even) td {
+    background-color: #f0f0f0;
+  }
+  
+  .crawlerConfigPage tr:nth-child(odd) td {
+    background-color: #ffffff;
+  }
+  
+  @media (max-width: 600px) {
+    .crawlerConfigPage table {
+      font-size: 14px;
+    }
+  
+    .crawlerConfigPage th,
+    .crawlerConfigPage td {
+      padding: 8px;
+    }
+  
+    .crawlerConfigPage th:nth-child(1),
+    .crawlerConfigPage td:nth-child(1),
+    .crawlerConfigPage th:nth-child(7),
+    .crawlerConfigPage td:nth-child(7) {
+      min-width: 48px;
+    }
+  }
+  
