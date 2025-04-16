@@ -2,7 +2,9 @@ from fastapi import FastAPI, Form, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from ProjectManager import ProjectManager
 import neo4j.time
-import json
+from SQLInjectionManager import SQLInjectionManager
+from fastapi import Request
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
@@ -103,3 +105,25 @@ async def export_project(projectName: str):
             return {"status": "failure", "error": result.get("error", "Failed to export project")}
     except Exception as e:
         return {"status": "failure", "error": f"Export failed: {str(e)}"}
+    
+@app.post("/api/sql_injection")
+async def run_sql_injection(request: Request):
+    data = await request.json()
+    print("[SQLInjectionAPI] Received request:", data)
+
+    target_url = data.get("target_url")
+    port = data.get("port", 80)
+    timeout = data.get("timeout", 5)
+    headers = data.get("headers", {})
+    enum_level = data.get("enum_level", 0)
+
+    manager = SQLInjectionManager()
+    result = manager.perform_sql_injection(
+        target_url=target_url,
+        port=port,
+        timeout=timeout,
+        headers=headers,
+        enum_level=enum_level
+    )
+
+    return JSONResponse(content=result)

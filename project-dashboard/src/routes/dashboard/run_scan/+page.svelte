@@ -12,7 +12,7 @@
       window.location.href = "/main/tools/AI";
     }
     function gotoSQLInjector() {
-      window.location.href = "sql_injector";
+      window.location.href = "/dashboard/run_scan/sql_injector";
     }
 
   </script>
