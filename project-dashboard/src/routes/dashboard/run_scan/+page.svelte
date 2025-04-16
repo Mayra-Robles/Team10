@@ -11,6 +11,10 @@
     function gotoAI() {
       window.location.href = "/main/tools/AI";
     }
+    function gotoSQLInjector() {
+      window.location.href = "sql_injector";
+    }
+
   </script>
   
   <div class="container mt-5">
@@ -57,7 +61,7 @@
         <div class="card h-100 clickable-card">
           <div class="card-body d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">SQL injector</h5>
-            <button class="btn btn-sm btn-primary" on:click={gotoAI}>Select</button>
+            <button class="btn btn-sm btn-primary" on:click={gotoSQLInjector}>Select</button>
           </div>
         </div>
       </div>
