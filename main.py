@@ -4,6 +4,11 @@ from ProjectManager import ProjectManager
 import neo4j.time
 import json
 
+
+from SQLInjectionManager import SQLInjectionManager
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
 app = FastAPI()
 
 # CORS setup, insecure for now
@@ -70,3 +75,29 @@ async def create_project(project_name: str = Form(...),
     files: list[UploadFile] = File(default=[])):
     result=pm.create_project(project_name, locked, description, machine_IP, status, lead_analyst_initials, files)
     return {"status": "success"}
+
+
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+@app.post("/api/sql_injection")
+async def run_sql_injection(request: Request):
+    data = await request.json()
+    print("[SQLInjectionAPI] Received request:", data)
+
+    target_url = data.get("target_url")
+    port = data.get("port", 80)
+    timeout = data.get("timeout", 5)
+    headers = data.get("headers", {})
+    enum_level = data.get("enum_level", 0)
+
+    manager = SQLInjectionManager()
+    result = manager.perform_sql_injection(
+        target_url=target_url,
+        port=port,
+        timeout=timeout,
+        headers=headers,
+        enum_level=enum_level
+    )
+
+    return JSONResponse(content=result)
